@@ -11,8 +11,8 @@ connectDB();
 const app = express();
 
 // ✅ Middleware (Order Matters)
-app.use(express.json()); // Ensure JSON is parsed before routes
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '100mb' })); // Ensure JSON is parsed before routes
+app.use(express.urlencoded({ extended: true, limit: '100mb'  }));
 
 // ✅ CORS Configuration
 const allowedOrigins = ["http://localhost:5173"];
@@ -29,18 +29,29 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
+    maxBodySize: '100mb',
   })
 );
 
 // ✅ Debugging Middleware (Improved)
 app.use((req, res, next) => {
+  if (!req.url.startsWith("/api") && !req.url.startsWith("/uploads")) {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  }
   next();
 });
+
+
 
 // ✅ Test Route
 app.get("/", (req, res) => {
   res.send("🚀 Server is running...");
 });
+
+const path = require("path");
+
+// ✅ Serve static files from "uploads" directory
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ✅ Import Routes
 const codeRoutes = require("./routes/codeRoutes");
@@ -67,7 +78,6 @@ app.post("/execute", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-
 
 // ✅ Error Handler
 app.use((err, req, res, next) => {

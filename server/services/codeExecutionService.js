@@ -6,32 +6,63 @@ const util = require("util");
 // Convert exec to return a Promise
 const execPromise = util.promisify(exec);
 
-const runCodeInDocker = async (code, language, input) => {
+const runCodeInDocker = async (code, language, input = "") => {
   try {
     // ✅ Step 1: Validate Supported Language
-    if (language !== "javascript") {
-      throw new Error("Only JavaScript execution is supported for now.");
+    const supportedLanguages = {
+      javascript: { ext: "js", dockerImage: "node:18", runCmd: "node" },
+      python: { ext: "py", dockerImage: "python:3.9", runCmd: "python3" },
+    };
+
+    if (!supportedLanguages[language]) {
+      throw new Error("Only JavaScript and Python execution are supported for now.");
     }
 
-    // ✅ Step 2: Create a Temporary JavaScript File
-    const tempFilePath = path.join(__dirname, "tempCode.js");
+    // ✅ Step 2: Create Temporary Files
+    const tempDir = path.join(__dirname, "../temp");
+    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
+
+    const fileExt = supportedLanguages[language].ext;
+    const tempFilePath = path.join(tempDir, `tempCode.${fileExt}`);
+    const inputFilePath = path.join(tempDir, "input.txt");
+
+    // ✅ Always Write Code to a File
     fs.writeFileSync(tempFilePath, code);
 
-    // ✅ Step 3: Run Code in a Node.js Docker Container
-    const dockerCommand = `docker run --rm -v ${tempFilePath}:/app/code.js node:18 node /app/code.js`;
+    // ✅ Always Create `input.txt` (Even if Empty)
+    fs.writeFileSync(inputFilePath, input || " "); // Write space to ensure file is not empty
 
-    console.log(`Executing command: ${dockerCommand}`); // Debugging
+    // ✅ Step 3: Run Code in Docker Container
+    const dockerImage = supportedLanguages[language].dockerImage;
+    const runCmd = supportedLanguages[language].runCmd;
 
+    // ✅ Fix: Remove `< /app/input.txt` and Use Argument Instead
+    const dockerCommand = `
+      docker run --rm \
+      -v "${tempFilePath}:/app/code.${fileExt}" \
+      -v "${inputFilePath}:/app/input.txt" \
+      ${dockerImage} ${runCmd} /app/code.${fileExt} /app/input.txt
+    `.trim();
+
+    
+
+    // ✅ Execute Docker Command
     const { stdout, stderr } = await execPromise(dockerCommand);
 
-    // ✅ Step 4: Return Execution Output
-    if (stderr) {
-      throw new Error(stderr);
-    }
+    // ✅ Step 4: Cleanup Temporary Files
+    fs.unlinkSync(tempFilePath);
+    fs.unlinkSync(inputFilePath);
 
-    return stdout.trim();
+    // ✅ Step 5: Return Execution Output
+    return {
+      message: "Execution successful",
+      output: stdout.trim() || stderr.trim(), // Return stderr if stdout is empty
+    };
   } catch (error) {
-    return `Execution Error: ${error.message}`;
+    return {
+      message: "Execution failed",
+      output: `Execution Error: ${error.message}`,
+    };
   }
 };
 
