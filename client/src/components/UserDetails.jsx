@@ -86,7 +86,8 @@ const UserDetails = ({ user, updateUser }) => {
   const handleSave = async () => {
     try {
       console.log("Updated Social Links Before Sending:", formData.socialLinks);
-      // ✅ Send a regular JSON payload (instead of FormData)
+
+      // ✅ Prepare the updated data payload
       const updatedData = {
         username: formData.username,
         email: formData.email,
@@ -101,8 +102,9 @@ const UserDetails = ({ user, updateUser }) => {
         const imageFormData = new FormData();
         imageFormData.append("profileImage", selectedImage);
 
+        // ✅ Upload the image and get the URL
         const imageUploadRes = await axios.put(
-          "http://localhost:5001/api/users/upload-profile-image",
+          "http://localhost:5001/api/users/update",
           imageFormData,
           {
             headers: {
@@ -112,13 +114,16 @@ const UserDetails = ({ user, updateUser }) => {
             withCredentials: true,
           }
         );
-        console.log("Response Data After Save:", res.data);
 
-        // ✅ Update profileImage path after upload
-        updatedData.profileImage = imageUploadRes.data.profileImage;
+        // console.log("Image Upload Response:", imageUploadRes.data);
+
+        // ✅ Ensure the backend returns a valid profileImage URL
+        if (imageUploadRes.data && imageUploadRes.data.profileImage) {
+          updatedData.profileImage = imageUploadRes.data.profileImage;
+        }
       }
 
-      // ✅ Send the updated data to backend
+      // ✅ Now send the entire user data update request
       const res = await axios.put(
         "http://localhost:5001/api/users/update",
         updatedData,
@@ -130,7 +135,8 @@ const UserDetails = ({ user, updateUser }) => {
           withCredentials: true,
         }
       );
-      console.log("Updated User Fetched After Save:", res.data);
+
+      // console.log("Updated User Data After Save:", res.data);
 
       updateUser(res.data); // ✅ Ensure UI updates with latest data
       setIsEditing(false);
