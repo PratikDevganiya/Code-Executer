@@ -19,7 +19,7 @@ router.use((req, res, next) => {
 });
 
 // ✅ Route for code execution
-router.post("/execute", async (req, res) => {
+router.post("/execute", protect , async (req, res) => {
   try {
     const { code, language, input } = req.body;
 

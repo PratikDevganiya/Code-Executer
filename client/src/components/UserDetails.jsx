@@ -252,43 +252,56 @@ const UserDetails = ({ user, updateUser }) => {
       {/* Social Links */}
       <div className="mt-6 w-full">
         <h3 className="text-md text-gray-800 font-semibold">Social Links</h3>
+
         {isEditing ? (
           <div className="space-y-2">
             {Object.entries(formData.socialLinks).map(([key, value]) => (
-              <input
-                key={key}
-                type="text"
-                name={key}
-                value={value}
-                onChange={handleChange}
-                placeholder={`${
-                  key.charAt(0).toUpperCase() + key.slice(1)
-                } URL`}
-                className="border border-gray-300 rounded-md p-2 w-full"
-              />
+              <div key={key} className="flex items-center gap-2">
+                {key === "github" && <FaGithub className="text-gray-600" />}
+                {key === "linkedin" && <FaLinkedin className="text-blue-600" />}
+                {key === "portfolio" && <FaLink className="text-gray-500" />}
+
+                <input
+                  type="text"
+                  name={key}
+                  value={value}
+                  onChange={handleChange}
+                  placeholder={`${
+                    key.charAt(0).toUpperCase() + key.slice(1)
+                  } URL`}
+                  className="border border-gray-300 rounded-md p-2 w-full"
+                />
+              </div>
             ))}
           </div>
         ) : (
-          <div className="flex flex-col space-y-2 mt-2">
-            {Object.entries(formData.socialLinks).map(([key, value]) =>
-              value ? (
-                <a
-                  key={key}
-                  href={value}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-700"
-                >
-                  {key === "github" ? (
-                    <FaGithub />
-                  ) : key === "linkedin" ? (
-                    <FaLinkedin />
-                  ) : (
-                    <FaLink />
-                  )}{" "}
-                  {key}
-                </a>
-              ) : null
+          <div className="flex items-center gap-4 mt-2">
+            {formData.socialLinks.github && (
+              <a
+                href={formData.socialLinks.github}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FaGithub className="text-gray-600 text-2xl hover:text-black transition" />
+              </a>
+            )}
+            {formData.socialLinks.linkedin && (
+              <a
+                href={formData.socialLinks.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FaLinkedin className="text-blue-600 text-2xl hover:text-blue-800 transition" />
+              </a>
+            )}
+            {formData.socialLinks.portfolio && (
+              <a
+                href={formData.socialLinks.portfolio}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FaLink className="text-gray-500 text-2xl hover:text-gray-700 transition" />
+              </a>
             )}
           </div>
         )}

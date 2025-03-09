@@ -14,37 +14,45 @@ const Profile = () => {
   const [submissions, setSubmissions] = useState([]);
   const [collabHistory, setCollabHistory] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   // ✅ Separate refs to prevent redundant API calls
-  const hasFetchedProfile = useRef(false); 
-  const hasFetchedData = useRef(false); 
+  const hasFetchedProfile = useRef(false);
+  const hasFetchedData = useRef(false);
 
   // ✅ Fetch Submissions & Collaborations (Only When User Exists)
   useEffect(() => {
-    if (!user || hasFetchedData.current) return; 
+    if (!user || hasFetchedData.current) return;
     hasFetchedData.current = true;
 
     const fetchData = async () => {
       try {
-        // console.log("Fetching submission & collaboration data...");
-        const baseURL = "http://localhost:5001/api/code"; 
+        console.log("Fetching submission & collaboration data...");
+        const baseURL = "http://localhost:5001/api/code";
 
         const [submissionsRes, collabRes] = await Promise.all([
           axios.get(`${baseURL}/submissions`),
           axios.get(`${baseURL}/collaborations`),
         ]);
 
-        setSubmissions(Array.isArray(submissionsRes.data) ? submissionsRes.data : []);
-        setCollabHistory(Array.isArray(collabRes.data) ? collabRes.data : []); 
+        console.log("Submissions Response:", submissionsRes.data); // 🔍 Debugging Log
+        console.log("Collaboration Response:", collabRes.data);
+
+        setSubmissions(
+          Array.isArray(submissionsRes.data) ? submissionsRes.data : []
+        );
+        setCollabHistory(Array.isArray(collabRes.data) ? collabRes.data : []);
       } catch (error) {
-        console.error("Failed to fetch data:", error.response ? error.response.data : error);
+        console.error(
+          "Failed to fetch data:",
+          error.response ? error.response.data : error
+        );
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [user]); 
+  }, [user]);
 
   const updateUser = async (updatedUser) => {
     try {
@@ -75,11 +83,15 @@ const Profile = () => {
         </div>
         <div className="md:col-span-2 space-y-8">
           <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">📌 Recent Submissions</h2>
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+              📌 Recent Submissions
+            </h2>
             <RecentSubmissions submissions={submissions} />
           </div>
           <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">🤝 Collaboration History</h2>
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+              🤝 Collaboration History
+            </h2>
             <CollaborationHistory history={collabHistory} />
           </div>
         </div>
