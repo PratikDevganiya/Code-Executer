@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const { protect } = require("../middleware/authMiddleware");
-const { executeCode, getSubmissions } = require("../controllers/codeController");
+const codeController = require("../controllers/codeController");
 const CollaborationModel = require("../models/Collaboration"); // ✅ Import Model
+const { getAvailableLanguages, getInstallInstructions } = require("../utils/languageSetup");
 
 // ✅ Middleware for CORS handling
 router.use((req, res, next) => {
@@ -19,37 +20,45 @@ router.use((req, res, next) => {
 });
 
 // ✅ Route for code execution
-router.post("/execute", protect , async (req, res) => {
+router.post("/execute", protect, codeController.executeCode);
+
+// ✅ Route for fetching submissions (with authentication)
+router.get("/submissions", protect, codeController.getUserSubmissions);
+router.get("/submissions/:id", protect, codeController.getSubmissionById);
+router.post("/submissions", protect, codeController.saveSubmission);
+router.delete("/submissions/:id", protect, codeController.deleteSubmission);
+
+// ✅ Route for fetching collaborations (with authentication check)
+router.get("/collaborations", protect, codeController.getUserCollaborations);
+router.post("/collaborations", protect, codeController.saveCollaboration);
+router.get("/collaborations/:roomId", protect, codeController.getCollaborationByRoomId);
+router.delete("/collaborations/:id", protect, codeController.deleteCollaboration);
+
+// ✅ Route to check available languages
+router.get("/languages", async (req, res) => {
   try {
-    const { code, language, input } = req.body;
-
-    if (!code || !language) {
-      return res.status(400).json({ message: "Code and language are required" });
-    }
-
-    // ✅ Execute the code
-    await executeCode(req, res);
+    const availableLanguages = getAvailableLanguages();
+    res.json({ languages: availableLanguages });
   } catch (error) {
-    console.error("Execution Error:", error);
-    res.status(500).json({ message: "Execution failed", error: error.message });
+    console.error("Error checking languages:", error);
+    res.status(500).json({ message: "Failed to check available languages", error: error.message });
   }
 });
 
-// ✅ Route for fetching submissions (with authentication)
-router.get("/submissions", protect, getSubmissions);
-
-// ✅ Route for fetching collaborations (with authentication check)
-router.get("/collaborations", protect, async (req, res) => {
+// ✅ Route to get installation instructions for a specific language
+router.get("/languages/:language/install", protect, async (req, res) => {
   try {
-    if (!req.user) {
-      return res.status(403).json({ message: "Unauthorized access" });
+    const { language } = req.params;
+    const instructions = getInstallInstructions(language);
+    
+    if (typeof instructions === 'string') {
+      return res.status(404).json({ error: instructions });
     }
-
-    const collaborations = await CollaborationModel.find();
-    res.json({ success: true, collaborations });
+    
+    res.json(instructions);
   } catch (error) {
-    console.error("Error fetching collaborations:", error);
-    res.status(500).json({ message: "Error fetching collaborations" });
+    console.error("Error getting installation instructions:", error);
+    res.status(500).json({ error: "Failed to get installation instructions" });
   }
 });
 

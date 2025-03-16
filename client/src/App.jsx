@@ -6,6 +6,8 @@ import Profile from './pages/Profile';
 import CodeEditor from './pages/CodeEditor';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import LanguageAdmin from './pages/LanguageAdmin';
+import SubmissionDetail from './pages/SubmissionDetail';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -22,12 +24,27 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+// Admin Route Component
+const AdminRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+  
+  if (!user || !user.isAdmin) {
+    return <Navigate to="/" />;
+  }
+  
+  return children;
+};
+
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-[#88BDBC]">
         <Navbar />
-        <main>
+        <main className="bg-[#88BDBC]">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
@@ -48,6 +65,24 @@ function App() {
                 </ProtectedRoute>
               } 
             />
+            <Route 
+              path="/admin/languages" 
+              element={
+                <AdminRoute>
+                  <LanguageAdmin />
+                </AdminRoute>
+              } 
+            />
+            <Route path="/submissions/:id" element={
+              <ProtectedRoute>
+                <SubmissionDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/collaborate/:roomId" element={
+              <ProtectedRoute>
+                <CodeEditor />
+              </ProtectedRoute>
+            } />
           </Routes>
         </main>
       </div>

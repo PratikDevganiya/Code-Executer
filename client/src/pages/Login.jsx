@@ -17,7 +17,7 @@ const Login = () => {
       setError("");
       setLoading(true);
       await login(email, password);
-      navigate("/editor");
+      navigate("/");
     } catch (error) {
       setError(error.response?.data?.message || "Failed to login");
     } finally {
@@ -26,22 +26,22 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#EBE5C2] font-['Poppins'] px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#88BDBC] font-['Poppins'] px-4 -mt-20">
       {/* Glassmorphic Login Card */}
-      <div className="max-w-md w-full p-8 bg-[#F5F2E3] backdrop-blur-md rounded-xl shadow-2xl border border-[#8B8558]/30">
+      <div className="max-w-md w-full p-8 bg-white backdrop-blur-md rounded-xl shadow-2xl border border-[#254E58]/30">
         {/* Title */}
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-[#3B3B3B] font-['Righteous']">
+          <h2 className="text-3xl font-bold text-[#254E58] font-['Righteous'] tracking-wide">
             Sign In
           </h2>
-          <p className="text-[#5A5A5A] mt-2 font-['Inter']">
+          <p className="text-[#112D32] mt-2 font-['Montserrat']">
             Welcome back! Log in to continue.
           </p>
         </div>
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-500 text-white px-4 py-2 rounded-lg text-center mt-4 shadow-md">
+          <div className="bg-red-100 text-red-700 border border-red-300 px-4 py-2 rounded-lg text-center mt-4 shadow-md">
             {error}
           </div>
         )}
@@ -55,7 +55,9 @@ const Login = () => {
               name="email"
               type="email"
               required
-              className="w-full bg-[#E6D4A4] text-[#3B3B3B] placeholder-[#5A5A5A] px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B8558] transition-all duration-300"
+              className="w-full bg-[#F5F5F5] text-[#112D32] placeholder-[#254E58]/60 px-4 py-3 rounded-lg 
+                       focus:outline-none focus:ring-2 focus:ring-[#88BDBC] border border-[#254E58]/20
+                       transition-all duration-300 font-['Montserrat']"
               placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -69,7 +71,9 @@ const Login = () => {
               name="password"
               type="password"
               required
-              className="w-full bg-[#E6D4A4] text-[#3B3B3B] placeholder-[#5A5A5A] px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B8558] transition-all duration-300"
+              className="w-full bg-[#F5F5F5] text-[#112D32] placeholder-[#254E58]/60 px-4 py-3 rounded-lg 
+                       focus:outline-none focus:ring-2 focus:ring-[#88BDBC] border border-[#254E58]/20
+                       transition-all duration-300 font-['Montserrat']"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -81,8 +85,8 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#8B8558] text-[#F5F2E3] py-3 rounded-lg font-semibold 
-              hover:bg-[#6B6343] transition-all duration-300 transform hover:scale-105 shadow-md"
+              className="w-full bg-[#254E58] text-white py-3 rounded-lg font-['Righteous'] tracking-wide
+                       hover:bg-[#112D32] transition-all duration-300 transform hover:scale-105 shadow-md"
             >
               {loading ? <LoadingSpinner /> : "Sign In"}
             </button>
@@ -91,13 +95,13 @@ const Login = () => {
 
         {/* Register Link */}
         <div className="text-center mt-4">
-          <p className="text-sm text-[#5A5A5A]">
+          <p className="text-sm text-[#112D32] font-['Montserrat']">
             Don't have an account?{" "}
             <Link
               to="/register"
-              className="text-[#8B8558] font-semibold underline 
-                         hover:text-[#6B6343] hover:scale-105 transition-all duration-300 
-                         hover:shadow-[0_0_8px_rgba(139,133,88,0.7)] px-1"
+              className="text-[#254E58] font-['Righteous'] hover:text-[#88BDBC] ml-1
+                       border-b border-[#254E58]/30 hover:border-[#88BDBC]
+                       transition-all duration-300"
             >
               Register here
             </Link>

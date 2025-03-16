@@ -1,69 +1,117 @@
-const { exec } = require("child_process");
-const path = require("path");
-const fs = require("fs");
-const util = require("util");
+const axios = require('axios');
+require('dotenv').config(); // Explicitly load environment variables
 
-// Convert exec to return a Promise
-const execPromise = util.promisify(exec);
+// Use Judge0 CE (Community Edition) public API with the correct endpoint
+const JUDGE0_API_URL = process.env.JUDGE0_API_URL || 'https://judge0-ce.p.rapidapi.com';
+const JUDGE0_API_KEY = process.env.JUDGE0_API_KEY; // Use the existing API key from .env
+const JUDGE0_RAPID_API_HOST = 'judge0-ce.p.rapidapi.com';
 
-const runCodeInDocker = async (code, language, input = "") => {
+// For debugging
+// console.log('JUDGE0_API_URL:', JUDGE0_API_URL);
+// console.log('JUDGE0_API_KEY:', JUDGE0_API_KEY ? 'is set' : 'is NOT set');
+
+// Language ID mapping for Judge0
+const languageIds = {
+  javascript: 63,  // Node.js
+  typescript: 74,  // TypeScript
+  python: 71,      // Python 3
+  java: 62,        // Java
+  c: 50,           // C (GCC)
+  cpp: 54,         // C++ (GCC)
+  "c++": 54,       // C++ (GCC) - Alternative name
+  csharp: 51,      // C#
+  "c#": 51,        // C# - Alternative name
+  php: 68,         // PHP
+  go: 60,          // Go
+  rust: 73,        // Rust
+  ruby: 72,        // Ruby
+  swift: 83,       // Swift
+  kotlin: 78       // Kotlin
+};
+
+const runCode = async (code, language, input = "") => {
   try {
-    // ✅ Step 1: Validate Supported Language
-    const supportedLanguages = {
-      javascript: { ext: "js", dockerImage: "node:18", runCmd: "node" },
-      python: { ext: "py", dockerImage: "python:3.9", runCmd: "python3" },
-    };
-
-    if (!supportedLanguages[language]) {
-      throw new Error("Only JavaScript and Python execution are supported for now.");
+    // Normalize language name
+    const normalizedLanguage = language.toLowerCase();
+    
+    // Validate language support
+    const languageId = languageIds[normalizedLanguage];
+    if (!languageId) {
+      console.error(`Unsupported language: ${language}`);
+      throw new Error(`Unsupported language: ${language}`);
     }
 
-    // ✅ Step 2: Create Temporary Files
-    const tempDir = path.join(__dirname, "../temp");
-    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
+    // Prepare submission
+    const submission = {
+      source_code: code,
+      language_id: languageId,
+      stdin: input,
+      // Optional parameters (can be adjusted)
+      cpu_time_limit: 5,      // 5 seconds
+      memory_limit: 128000,   // 128MB
+    };
 
-    const fileExt = supportedLanguages[language].ext;
-    const tempFilePath = path.join(tempDir, `tempCode.${fileExt}`);
-    const inputFilePath = path.join(tempDir, "input.txt");
+    // Create submission with RapidAPI authentication
+    const createResponse = await axios.post(`${JUDGE0_API_URL}/submissions`, submission, {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-RapidAPI-Key': JUDGE0_API_KEY,
+        'X-RapidAPI-Host': JUDGE0_RAPID_API_HOST
+      }
+    });
 
-    // ✅ Always Write Code to a File
-    fs.writeFileSync(tempFilePath, code);
+    const token = createResponse.data.token;
 
-    // ✅ Always Create `input.txt` (Even if Empty)
-    fs.writeFileSync(inputFilePath, input || " "); // Write space to ensure file is not empty
+    // Poll for results
+    let result;
+    for (let i = 0; i < 10; i++) {
+      const getResponse = await axios.get(`${JUDGE0_API_URL}/submissions/${token}`, {
+        headers: {
+          'X-RapidAPI-Key': JUDGE0_API_KEY,
+          'X-RapidAPI-Host': JUDGE0_RAPID_API_HOST
+        }
+      });
 
-    // ✅ Step 3: Run Code in Docker Container
-    const dockerImage = supportedLanguages[language].dockerImage;
-    const runCmd = supportedLanguages[language].runCmd;
+      result = getResponse.data;
 
-    // ✅ Fix: Remove `< /app/input.txt` and Use Argument Instead
-    const dockerCommand = `
-      docker run --rm \
-      -v "${tempFilePath}:/app/code.${fileExt}" \
-      -v "${inputFilePath}:/app/input.txt" \
-      ${dockerImage} ${runCmd} /app/code.${fileExt} /app/input.txt
-    `.trim();
+      if (result.status && result.status.id > 2) { // Status > 2 means processing is done
+        break;
+      }
 
-    
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before polling again
+    }
 
-    // ✅ Execute Docker Command
-    const { stdout, stderr } = await execPromise(dockerCommand);
+    // Process result
+    if (!result) {
+      throw new Error("Execution timeout");
+    }
 
-    // ✅ Step 4: Cleanup Temporary Files
-    fs.unlinkSync(tempFilePath);
-    fs.unlinkSync(inputFilePath);
+    // Map Judge0 status to your status format
+    const statusMap = {
+      3: "completed",    // Accepted
+      4: "error",       // Wrong Answer
+      5: "error",       // Time Limit Exceeded
+      6: "error",       // Compilation Error
+      7: "runtime_error", // Runtime Error (SIGSEGV, SIGFPE, etc.)
+      13: "runtime_error" // Internal Error
+    };
 
-    // ✅ Step 5: Return Execution Output
     return {
-      message: "Execution successful",
-      output: stdout.trim() || stderr.trim(), // Return stderr if stdout is empty
+      message: result.status.description,
+      output: result.stdout || result.stderr || result.compile_output || "No output",
+      status: statusMap[result.status.id] || "error",
+      executionTime: result.time ? parseFloat(result.time) * 1000 : 0 // Convert to milliseconds
     };
   } catch (error) {
+    console.error("Code Execution Error:", error);
     return {
       message: "Execution failed",
-      output: `Execution Error: ${error.message}`,
+      output: `Error: ${error.message}`,
+      status: "error",
+      executionTime: 0
     };
   }
 };
 
-module.exports = { runCodeInDocker };
+module.exports = { runCode, languageIds };
+

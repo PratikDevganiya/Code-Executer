@@ -1,1 +1,584 @@
 @import "tailwindcss";
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes typing {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent }
+  50% { border-color: white }
+}
+
+.typing-animation {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 3px solid white;
+  animation: 
+    typing 3.5s steps(40, end),
+    blink-caret 0.75s step-end infinite;
+}
+
+.typing-animation-delay {
+  opacity: 0;
+  animation: fadeIn 0.5s ease-out forwards;
+  animation-delay: 3.5s;
+}
+
+/* New animations */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.float-animation {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.pulse-animation {
+  animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.8s ease-out forwards;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.slide-in-right {
+  animation: slideInRight 0.8s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  opacity: 0;
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.delay-300 {
+  animation-delay: 0.3s;
+}
+
+.delay-400 {
+  animation-delay: 0.4s;
+}
+
+.delay-500 {
+  animation-delay: 0.5s;
+}
+
+.delay-600 {
+  animation-delay: 0.6s;
+}
+
+.delay-700 {
+  animation-delay: 0.7s;
+}
+
+.delay-800 {
+  animation-delay: 0.8s;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer-effect {
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite;
+}
+
+/* Vertical feature card animations */
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.vertical-feature-card {
+  opacity: 0;
+  animation: slideInFromRight 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.vertical-feature-card:nth-child(odd) {
+  animation-name: slideInFromRight;
+}
+
+.vertical-feature-card:nth-child(even) {
+  animation-name: slideInLeft;
+}
+
+.vertical-feature-card:hover > div {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes bulletAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.vertical-feature-card:hover span {
+  animation: bulletAppear 0.3s ease forwards;
+  animation-delay: calc(var(--bullet-index) * 0.05s);
+}
+
+/* Scroll-triggered animations */
+.features-hidden .feature-reveal,
+.features-hidden .icon-container,
+.features-hidden .feature-title,
+.features-hidden .feature-description,
+.features-hidden .feature-tag {
+  animation: none !important;
+  opacity: 0;
+}
+
+/* Alternating left-right entrance animations */
+@keyframes slideInFromLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-100px) rotate(-3deg);
+  }
+  60% {
+    opacity: 1;
+  }
+  80% {
+    transform: translateX(10px) rotate(1deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) rotate(0);
+  }
+}
+
+@keyframes slideInFromRight {
+  0% {
+    opacity: 0;
+    transform: translateX(100px) rotate(3deg);
+  }
+  60% {
+    opacity: 1;
+  }
+  80% {
+    transform: translateX(-10px) rotate(-1deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) rotate(0);
+  }
+}
+
+.features-visible .feature-reveal:nth-child(odd) {
+  animation-name: slideInFromLeft !important;
+}
+
+.features-visible .feature-reveal:nth-child(even) {
+  animation-name: slideInFromRight !important;
+}
+
+.animate-feature {
+  animation: revealFeature 1.2s cubic-bezier(0.25, 1, 0.3, 1) forwards;
+  animation-delay: calc(var(--feature-index) * 0.2s);
+}
+
+.animate-icon {
+  animation: iconSpin 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: calc(var(--feature-index) * 0.2s + 0.6s);
+}
+
+.animate-title {
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: calc(var(--feature-index) * 0.2s + 0.8s);
+}
+
+.animate-description {
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: calc(var(--feature-index) * 0.2s + 0.9s);
+}
+
+.animate-tag {
+  animation: fadeInUp 0.3s ease-out forwards;
+  animation-delay: calc(var(--feature-index) * 0.2s + 1s + var(--tag-index) * 0.1s);
+}
+
+/* Enhanced hover effects */
+.feature-reveal:hover .icon-container {
+  animation: iconPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, glowPulse 1.5s infinite !important;
+  animation-delay: 0s, 0.5s;
+  transform: none;
+  opacity: 1 !important;
+}
+
+.feature-reveal .icon-container svg {
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes iconPop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  75% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Ripple effect on icon hover */
+.feature-reveal .icon-container::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease, height 0.6s ease;
+  z-index: 0;
+}
+
+.feature-reveal:hover .icon-container::after {
+  width: 150%;
+  height: 150%;
+}
+
+/* Unique feature card reveal animation */
+@keyframes revealFeature {
+  0% {
+    opacity: 0;
+    clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+    transform: scale(0.9);
+  }
+  30% {
+    clip-path: polygon(0 0, 15% 0, 15% 100%, 0 100%);
+  }
+  60% {
+    opacity: 1;
+    clip-path: polygon(0 0, 85% 0, 85% 100%, 0 100%);
+  }
+  100% {
+    opacity: 1;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    transform: scale(1);
+  }
+}
+
+@keyframes iconSpin {
+  0% {
+    transform: rotate(0deg) scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: rotate(180deg) scale(1.2);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes glowPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(136, 189, 188, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(136, 189, 188, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(136, 189, 188, 0);
+  }
+}
+
+.feature-reveal {
+  opacity: 0;
+}
+
+.feature-reveal .icon-container {
+  opacity: 0;
+}
+
+.feature-reveal .feature-title {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.feature-reveal .feature-description {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.feature-reveal .feature-tag {
+  opacity: 1;
+  transform: none;
+}
+
+/* Smooth hover exit transitions */
+.feature-reveal > div {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.feature-reveal:hover > div {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 30px rgba(0, 0, 0, 0.1);
+  border-left-width: 8px;
+}
+
+.feature-reveal .icon-container {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), 
+              box-shadow 0.6s ease-out;
+}
+
+.feature-reveal .feature-title {
+  transition: color 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.feature-reveal .feature-description {
+  transition: transform 0.4s ease;
+}
+
+.feature-reveal .feature-tag {
+  transition: background-color 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Hover state with animations */
+.feature-reveal:hover .icon-container {
+  animation: iconPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  box-shadow: 0 0 15px rgba(136, 189, 188, 0.7);
+  transform: scale(1.1);
+}
+
+.feature-reveal:hover .feature-title {
+  color: #88BDBC;
+  transform: translateY(0) scale(1.05);
+}
+
+.feature-reveal:hover .feature-description {
+  transform: translateY(0);
+}
+
+/* Ensure feature tags are always visible */
+.feature-tag {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.feature-tags-container {
+  opacity: 1 !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+/* Persistent glow effect after hover */
+@keyframes fadeOutGlow {
+  0% {
+    box-shadow: 0 0 15px rgba(136, 189, 188, 0.7);
+    transform: scale(1.1);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(136, 189, 188, 0);
+    transform: scale(1.1);
+  }
+}
+
+.feature-reveal .icon-container.hovered {
+  animation: fadeOutGlow 1.5s ease-out forwards;
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* Feature tag animations - Modified to keep tags visible */
+.feature-reveal:hover .feature-tag {
+  transform: scale(1.05); /* Just scale slightly on hover instead of appearing/disappearing */
+  background-color: rgba(136, 189, 188, 0.3);
+}
+
+/* Tag wave animations - Keep these for hover effect */
+@keyframes tagWave {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.feature-reveal:hover .feature-tag:nth-child(1) {
+  animation: tagWave 1s ease-in-out infinite;
+  animation-delay: 0s;
+}
+
+.feature-reveal:hover .feature-tag:nth-child(2) {
+  animation: tagWave 1s ease-in-out infinite;
+  animation-delay: 0.1s;
+}
+
+.feature-reveal:hover .feature-tag:nth-child(3) {
+  animation: tagWave 1s ease-in-out infinite;
+  animation-delay: 0.2s;
+}
+
+/* Collaborative Editor Styles */
+.cursor-other-user {
+  background-color: rgba(136, 189, 188, 0.3);
+  width: 3px !important;
+  margin-left: -1px;
+  pointer-events: none;
+}
+
+.cursor-other-user-before {
+  content: attr(data-username);
+  position: absolute;
+  background-color: #88BDBC;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateY(-100%);
+  margin-top: -4px;
+}
+
+/* Chat Styles */
+.chat-message {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Custom Scrollbar Styles */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #88BDBC;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #254E58;
+}
+
+/* For Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #88BDBC #f1f1f1;
+}

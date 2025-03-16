@@ -1,11 +1,40 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-const CollaborationSchema = new mongoose.Schema({
-  user1: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  user2: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  project: { type: String, required: true },
-  timestamp: { type: Date, default: Date.now },
-});
+const collaborationSchema = mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: 'User'
+    },
+    roomId: {
+      type: String,
+      required: true
+    },
+    code: {
+      type: String,
+      required: true
+    },
+    language: {
+      type: String,
+      default: 'javascript'
+    },
+    documentName: {
+      type: String,
+      default: 'Untitled Document'
+    },
+    editor: {
+      type: String,
+      required: true
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now
+    }
+  },
+  {
+    timestamps: true
+  }
+);
 
-const CollaborationModel = mongoose.model("Collaboration", CollaborationSchema);
-module.exports = CollaborationModel;
+module.exports = mongoose.model('Collaboration', collaborationSchema);

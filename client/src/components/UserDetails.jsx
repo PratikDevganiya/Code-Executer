@@ -147,11 +147,13 @@ const UserDetails = ({ user, updateUser }) => {
 
   return (
     <div
-      className="bg-gradient-to-r from-[#fcfcfc] to-[#f9f9f9] p-8 rounded-xl shadow-sm w-full max-w-lg mx-auto text-gray-900 min-h-[500px] flex flex-col items-center border border-gray-100"
-      style={{ fontFamily: "Righteous, sans-serif" }}
+      className="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg mx-auto text-[#112D32] min-h-[500px] flex flex-col items-center border-l-4 border-[#88BDBC] relative overflow-hidden transition-all duration-300 hover:shadow-xl"
+      style={{ fontFamily: "Montserrat, sans-serif" }}
     >
+      <div className="absolute -right-20 -bottom-20 w-60 h-60 bg-[#88BDBC]/5 rounded-full"></div>
+      
       {/* Profile Image */}
-      <div className="relative w-32 h-32 rounded-full border-2 border-gray-300 shadow-sm overflow-hidden">
+      <div className="relative w-32 h-32 rounded-full border-2 border-[#88BDBC]/40 shadow-lg overflow-hidden z-10">
         <img
           src={
             formData.profileImage.startsWith("/uploads/")
@@ -163,7 +165,7 @@ const UserDetails = ({ user, updateUser }) => {
         />
 
         {isEditing && (
-          <label className="absolute bottom-0 left-0 right-0 bg-gray-800 bg-opacity-75 text-white text-sm text-center cursor-pointer">
+          <label className="absolute bottom-0 left-0 right-0 bg-[#254E58]/80 text-white text-sm text-center cursor-pointer">
             <FaImage className="inline-block mr-1" /> Change
             <input
               type="file"
@@ -176,46 +178,46 @@ const UserDetails = ({ user, updateUser }) => {
       </div>
 
       {/* User Info Section */}
-      <div className="mt-6 w-full text-left space-y-3">
+      <div className="mt-6 w-full text-left space-y-3 relative z-10">
         <div className="flex items-center gap-2">
-          <FaUser className="text-gray-500" />
+          <FaUser className="text-[#88BDBC]" />
           {isEditing ? (
             <input
               type="text"
               name="username"
               value={formData.username}
               onChange={handleChange}
-              className="border border-gray-300 rounded-md p-2 w-full text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              className="border border-[#88BDBC]/30 bg-white rounded-md p-2 w-full text-[#112D32] focus:outline-none focus:ring-2 focus:ring-[#88BDBC]/60 font-['Montserrat']"
             />
           ) : (
-            <span>{formData.username}</span>
+            <span className="font-['Montserrat'] text-[#254E58]">{formData.username}</span>
           )}
         </div>
 
         <div className="flex items-center gap-2">
-          <FaEnvelope className="text-gray-500" />
+          <FaEnvelope className="text-[#88BDBC]" />
           {isEditing ? (
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="border border-gray-300 rounded-md p-2 w-full text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              className="border border-[#88BDBC]/30 bg-white rounded-md p-2 w-full text-[#112D32] focus:outline-none focus:ring-2 focus:ring-[#88BDBC]/60 font-['Montserrat']"
             />
           ) : (
-            <span>{formData.email}</span>
+            <span className="font-['Montserrat'] text-[#254E58]">{formData.email}</span>
           )}
         </div>
 
         {/* Country & Role Selection */}
         <div className="flex items-center gap-2">
-          <FaGlobe className="text-gray-500" />
+          <FaGlobe className="text-[#88BDBC]" />
           {isEditing ? (
             <select
               name="country"
               value={formData.country}
               onChange={handleChange}
-              className="border border-gray-300 rounded-md p-2 w-full text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              className="border border-[#88BDBC]/30 bg-white rounded-md p-2 w-full text-[#112D32] focus:outline-none focus:ring-2 focus:ring-[#88BDBC]/60 font-['Montserrat']"
             >
               {countries.map((country) => (
                 <option key={country} value={country}>
@@ -224,18 +226,18 @@ const UserDetails = ({ user, updateUser }) => {
               ))}
             </select>
           ) : (
-            <span>{formData.country}</span>
+            <span className="font-['Montserrat'] text-[#254E58]">{formData.country}</span>
           )}
         </div>
 
         <div className="flex items-center gap-2">
-          <FaGraduationCap className="text-gray-500" />
+          <FaGraduationCap className="text-[#88BDBC]" />
           {isEditing ? (
             <select
               name="role"
               value={formData.role}
               onChange={handleChange}
-              className="border border-gray-300 rounded-md p-2 w-full text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              className="border border-[#88BDBC]/30 bg-white rounded-md p-2 w-full text-[#112D32] focus:outline-none focus:ring-2 focus:ring-[#88BDBC]/60 font-['Montserrat']"
             >
               {roles.map((role) => (
                 <option key={role} value={role}>
@@ -244,22 +246,22 @@ const UserDetails = ({ user, updateUser }) => {
               ))}
             </select>
           ) : (
-            <span>{formData.role}</span>
+            <span className="font-['Montserrat'] text-[#254E58]">{formData.role}</span>
           )}
         </div>
       </div>
 
       {/* Social Links */}
-      <div className="mt-6 w-full">
-        <h3 className="text-md text-gray-800 font-semibold">Social Links</h3>
+      <div className="mt-6 w-full relative z-10">
+        <h3 className="text-md text-[#254E58] font-semibold font-['Righteous']">Social Links</h3>
 
         {isEditing ? (
           <div className="space-y-2">
             {Object.entries(formData.socialLinks).map(([key, value]) => (
               <div key={key} className="flex items-center gap-2">
-                {key === "github" && <FaGithub className="text-gray-600" />}
-                {key === "linkedin" && <FaLinkedin className="text-blue-600" />}
-                {key === "portfolio" && <FaLink className="text-gray-500" />}
+                {key === "github" && <FaGithub className="text-[#88BDBC]" />}
+                {key === "linkedin" && <FaLinkedin className="text-[#88BDBC]" />}
+                {key === "portfolio" && <FaLink className="text-[#88BDBC]" />}
 
                 <input
                   type="text"
@@ -269,7 +271,7 @@ const UserDetails = ({ user, updateUser }) => {
                   placeholder={`${
                     key.charAt(0).toUpperCase() + key.slice(1)
                   } URL`}
-                  className="border border-gray-300 rounded-md p-2 w-full"
+                  className="border border-[#88BDBC]/30 bg-white rounded-md p-2 w-full text-[#112D32] focus:outline-none focus:ring-2 focus:ring-[#88BDBC]/60 font-['Montserrat']"
                 />
               </div>
             ))}
@@ -281,8 +283,9 @@ const UserDetails = ({ user, updateUser }) => {
                 href={formData.socialLinks.github}
                 target="_blank"
                 rel="noopener noreferrer"
+                className="group relative p-2 rounded-full bg-gradient-to-br from-white to-[#F5F5F5] border border-[#88BDBC]/40 hover:border-[#88BDBC] shadow-sm hover:shadow-md transition-all duration-200"
               >
-                <FaGithub className="text-gray-600 text-2xl hover:text-black transition" />
+                <FaGithub className="text-[#333333] text-xl group-hover:text-[#24292e] transition-colors duration-200" />
               </a>
             )}
             {formData.socialLinks.linkedin && (
@@ -290,8 +293,9 @@ const UserDetails = ({ user, updateUser }) => {
                 href={formData.socialLinks.linkedin}
                 target="_blank"
                 rel="noopener noreferrer"
+                className="group relative p-2 rounded-full bg-gradient-to-br from-white to-[#F5F5F5] border border-[#88BDBC]/40 hover:border-[#88BDBC] shadow-sm hover:shadow-md transition-all duration-200"
               >
-                <FaLinkedin className="text-blue-600 text-2xl hover:text-blue-800 transition" />
+                <FaLinkedin className="text-[#0077B5] text-xl group-hover:text-[#0A66C2] transition-colors duration-200" />
               </a>
             )}
             {formData.socialLinks.portfolio && (
@@ -299,8 +303,9 @@ const UserDetails = ({ user, updateUser }) => {
                 href={formData.socialLinks.portfolio}
                 target="_blank"
                 rel="noopener noreferrer"
+                className="group relative p-2 rounded-full bg-gradient-to-br from-white to-[#F5F5F5] border border-[#88BDBC]/40 hover:border-[#88BDBC] shadow-sm hover:shadow-md transition-all duration-200"
               >
-                <FaLink className="text-gray-500 text-2xl hover:text-gray-700 transition" />
+                <FaLink className="text-[#254E58] text-xl group-hover:text-[#88BDBC] transition-colors duration-200" />
               </a>
             )}
           </div>
@@ -308,7 +313,7 @@ const UserDetails = ({ user, updateUser }) => {
       </div>
 
       <button
-        className="mt-6 px-6 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white flex items-center gap-2"
+        className="mt-6 px-6 py-2 rounded-lg bg-[#88BDBC] text-white hover:bg-[#254E58] transition-all flex items-center gap-2 font-medium z-10"
         onClick={isEditing ? handleSave : () => setIsEditing(true)}
       >
         {isEditing ? <FaSave /> : <FaEdit />}
