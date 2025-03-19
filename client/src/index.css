@@ -1,5 +1,87 @@
 @import "tailwindcss";
 
+/* MacBook Air M1 minor width adjustments */
+@media screen and (min-width: 1280px) and (max-width: 1440px) {
+  .macbook-width {
+    width: 75% !important;
+  }
+}
+
+/* Timeline continuous line styles */
+.timeline-container {
+  position: relative;
+}
+
+.timeline-container::before {
+  content: '';
+  position: absolute;
+  left: 12px !important; /* Position to align with center of dots */
+  top: 0;
+  height: 100%;
+  width: 2px;
+  background-color: rgba(136, 189, 188, 0.3);
+  z-index: 1;
+}
+
+/* Fix for timeline line in scrollable containers */
+.timeline-scroll-container {
+  position: relative;
+}
+
+/* Remove the continuous line from the container */
+.timeline-scroll-container::before {
+  display: none;
+}
+
+/* Add the line to the timeline container */
+.timeline-scroll-container::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 0;
+  height: 100%;
+  width: 2px;
+  background-color: rgba(136, 189, 188, 0.3);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Add the line to each timeline item instead */
+.timeline-item {
+  position: relative;
+  z-index: 2;
+}
+
+/* Line for RecentSubmissions component */
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: -20px; /* Start above the item */
+  height: calc(100% + 20px); /* Extend to the next item */
+  width: 2px;
+  background-color: rgba(136, 189, 188, 0.3);
+  z-index: 1;
+}
+
+/* Line for CollaborationHistory component */
+.ml-10.timeline-item::before {
+  left: -30px; /* Adjust for the different layout in CollaborationHistory */
+}
+
+/* Remove the line from the first item's top */
+.timeline-item:first-child::before {
+  top: 0;
+  height: 100%;
+}
+
+/* Ensure the line connects all items */
+.timeline-item:last-child {
+  position: relative;
+  margin-bottom: 0 !important; /* Remove bottom margin from last item */
+  padding-bottom: 20px; /* Add padding to ensure the line is visible */
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

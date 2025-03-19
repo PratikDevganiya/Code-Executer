@@ -7,6 +7,11 @@ const { Server } = require("socket.io");
 // Load environment variables
 require("dotenv").config();
 
+// Debug mode flag - set to false to reduce console output
+const DEBUG_MODE = false;
+// Make DEBUG_MODE available globally
+global.DEBUG_MODE = DEBUG_MODE;
+
 // Connect to Database
 connectDB();
 
@@ -14,7 +19,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: ["http://localhost:5173", "http://localhost:3000"],
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -22,13 +27,24 @@ const io = new Server(server, {
 
 // Track active rooms and users
 const activeRooms = new Map(); // Map of roomId -> Set of socket IDs
+const usernames = new Map(); // Map of socket ID -> username
 
 // Socket.io connection handling
 io.on("connection", (socket) => {
   let currentRoom = null;
 
   // Join a collaboration room
-  socket.on("join-room", (roomId) => {
+  socket.on("join-room", (data) => {
+    const roomId = typeof data === 'object' ? data.roomId : data;
+    const username = typeof data === 'object' ? data.username : 'Anonymous';
+    
+    if (DEBUG_MODE) {
+      console.log(`User ${username} (${socket.id}) joining room: ${roomId}`);
+    }
+    
+    // Store username for this socket
+    usernames.set(socket.id, username);
+    
     // Leave previous room if any
     if (currentRoom) {
       leaveRoom(socket, currentRoom);
@@ -40,28 +56,59 @@ io.on("connection", (socket) => {
     
     // Add user to room tracking
     if (!activeRooms.has(roomId)) {
-      activeRooms.set(roomId, new Set());
+      activeRooms.set(roomId, new Map());
     }
-    activeRooms.get(roomId).add(socket.id);
+    activeRooms.get(roomId).set(socket.id, username);
     
-    // Emit join event to room
+    // Emit join event to room with username
     socket.to(roomId).emit("user-joined", {
       userId: socket.id,
+      username: username,
       timestamp: new Date()
     });
     
-    // Send current user count to all users in the room
-    io.to(roomId).emit("user-count-update", {
-      count: activeRooms.get(roomId).size
+    // Send current user count and list of users to all users in the room
+    const users = Array.from(activeRooms.get(roomId).entries()).map(([id, name]) => ({
+      userId: id,
+      username: name
+    }));
+    
+    io.to(roomId).emit("user-list-update", {
+      users: users,
+      count: users.length
     });
   });
 
-  // Handle code changes
-  socket.on("code-change", (data) => {
+  // Handle code updates
+  socket.on("code-update", (data) => {
+    if (DEBUG_MODE) {
+      console.log(`Code update from ${socket.id} in room ${data.roomId}`);
+    }
     socket.to(data.roomId).emit("code-update", {
       code: data.code,
-      userId: socket.id,
-      timestamp: new Date()
+      userId: socket.id
+    });
+  });
+
+  // Handle input updates
+  socket.on("input-update", (data) => {
+    if (DEBUG_MODE) {
+      console.log(`Input update from ${socket.id} in room ${data.roomId}`);
+    }
+    socket.to(data.roomId).emit("input-update", {
+      input: data.input,
+      userId: socket.id
+    });
+  });
+
+  // Handle output updates
+  socket.on("output-update", (data) => {
+    if (DEBUG_MODE) {
+      console.log(`Output update from ${socket.id} in room ${data.roomId}`);
+    }
+    socket.to(data.roomId).emit("output-update", {
+      output: data.output,
+      userId: socket.id
     });
   });
 
@@ -92,7 +139,8 @@ io.on("connection", (socket) => {
   });
   
   // Handle explicit room leaving
-  socket.on("leave-room", (roomId) => {
+  socket.on("leave-room", (data) => {
+    const roomId = typeof data === 'object' ? data.roomId : data;
     if (roomId) {
       leaveRoom(socket, roomId);
       currentRoom = null;
@@ -111,18 +159,29 @@ io.on("connection", (socket) => {
       if (activeRooms.get(roomId).size === 0) {
         activeRooms.delete(roomId);
       } else {
-        // Notify remaining users about the updated count
-        io.to(roomId).emit("user-count-update", {
-          count: activeRooms.get(roomId).size
+        // Get updated user list
+        const users = Array.from(activeRooms.get(roomId).entries()).map(([id, name]) => ({
+          userId: id,
+          username: name
+        }));
+        
+        // Notify remaining users about the updated count and user list
+        io.to(roomId).emit("user-list-update", {
+          users: users,
+          count: users.length
         });
         
         // Notify about user leaving
         socket.to(roomId).emit("user-left", {
           userId: socket.id,
+          username: usernames.get(socket.id) || 'Anonymous',
           timestamp: new Date()
         });
       }
     }
+    
+    // Clean up username mapping
+    usernames.delete(socket.id);
   }
 });
 
@@ -131,7 +190,7 @@ app.use(express.json({ limit: '100mb' })); // Ensure JSON is parsed before route
 app.use(express.urlencoded({ extended: true, limit: '100mb'  }));
 
 // ✅ CORS Configuration
-const allowedOrigins = ["http://localhost:5173"];
+const allowedOrigins = ["http://localhost:5173", "http://localhost:3000"];
 
 app.use(
   cors({
@@ -151,7 +210,7 @@ app.use(
 
 // ✅ Debugging Middleware (Improved)
 app.use((req, res, next) => {
-  if (!req.url.startsWith("/api") && !req.url.startsWith("/uploads")) {
+  if (!req.url.startsWith("/api")) {
     // console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   }
   next();
@@ -161,11 +220,6 @@ app.use((req, res, next) => {
 app.get("/", (req, res) => {
   res.send("🚀 Server is running...");
 });
-
-const path = require("path");
-
-// ✅ Serve static files from "uploads" directory
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ✅ Import Routes
 const codeRoutes = require("./routes/codeRoutes");

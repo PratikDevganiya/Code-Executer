@@ -87,9 +87,6 @@ const getUserProfile = asyncHandler(async (req, res) => {
 // @desc    Update user profile
 // @route   PUT /api/users/update
 // @access  Private
-// @desc    Update user profile
-// @route   PUT /api/users/update
-// @access  Private
 const updateUserProfile = asyncHandler(async (req, res) => {
   try {
     const userId = req.user.id;
@@ -142,10 +139,15 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       unsetQuery["socialLinks"] = 1;
     }
 
-    // ✅ Handle profile image update
+    // ✅ Handle profile image update - NEW BASE64 APPROACH
     if (req.file) {
-      const baseUrl = `${req.protocol}://${req.get("host")}`; // Example: http://localhost:5001
-      updateQuery["$set"]["profileImage"] = `${baseUrl}/uploads/${req.file.filename}`;
+      // Convert the buffer to base64 string
+      const base64Image = req.file.buffer.toString('base64');
+      const mimeType = req.file.mimetype;
+      updateQuery["$set"]["profileImage"] = `data:${mimeType};base64,${base64Image}`;
+    } else if (req.body.profileImage && req.body.profileImage.startsWith('data:image')) {
+      // If client sent a base64 image directly
+      updateQuery["$set"]["profileImage"] = req.body.profileImage;
     }
 
     // ✅ Final MongoDB update operation
@@ -165,9 +167,6 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });
-
-
-
 
 module.exports = {
   registerUser,

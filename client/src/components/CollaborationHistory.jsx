@@ -112,84 +112,86 @@ const CollaborationHistory = ({ history = [], onDelete }) => {
             </div>
           </div>
 
-          {/* Timeline View with Scrollable Container - Compact height for balanced view */}
+          {/* Timeline View with Scrollable Container - Using CSS for continuous line */}
           <div className="bg-white rounded-b-lg p-4">
-            <div className="relative max-h-[330px] overflow-y-auto pr-2 custom-scrollbar">
-              <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-[#88BDBC]/30"></div>
-              
-              <div className="space-y-4">
-                {sortedCollaborations.map((entry, index) => (
-                  <div key={entry._id || index} className="ml-10 relative">
-                    <div className="absolute -left-10 top-1/2 transform -translate-y-1/2">
-                      <div className="w-6 h-6 rounded-full bg-[#88BDBC] flex items-center justify-center">
-                        <div className="w-3 h-3 bg-white rounded-full"></div>
+            <div className="relative h-[330px] timeline-scroll-container">
+              <div className="h-full overflow-y-auto pr-2 custom-scrollbar">
+                <div className="space-y-4">
+                  {sortedCollaborations.map((entry, index) => (
+                    <div key={entry._id || index} className="ml-10 relative timeline-item">
+                      <div className="absolute -left-10 top-1/2 transform -translate-y-1/2">
+                        <div className="w-6 h-6 rounded-full bg-[#88BDBC] flex items-center justify-center">
+                          <div className="w-3 h-3 bg-white rounded-full"></div>
+                        </div>
                       </div>
-                    </div>
-                    
-                    <div className="bg-white border border-[#88BDBC]/20 rounded-lg p-4 hover:shadow-md transition-all duration-200">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <FaClock className="text-[#88BDBC] text-sm" />
-                            <span className="text-[#254E58] text-sm font-medium">
-                              {formatDate(entry.timestamp || entry.createdAt)}
-                            </span>
+                      
+                      <div className="bg-white border border-[#88BDBC]/20 rounded-lg p-4 hover:shadow-md transition-all duration-200">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <FaClock className="text-[#88BDBC] text-sm" />
+                              <span className="text-[#254E58] text-sm font-medium">
+                                {formatDate(entry.timestamp || entry.createdAt)}
+                              </span>
+                            </div>
+                            
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-[#88BDBC]/20 rounded-full flex items-center justify-center text-[#254E58]">
+                                <FaUserEdit />
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-[#254E58] font-['Montserrat']">
+                                    {entry.participants && entry.participants.length > 0 
+                                      ? entry.participants.join(' | ') 
+                                      : entry.editor || "Unknown"}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1 mt-1">
+                                  <FaFileCode className="text-[#88BDBC] text-sm" />
+                                  <span className="text-[#112D32] font-['Montserrat']">
+                                    {entry.documentName || "Untitled Document"}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                           
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-[#88BDBC]/20 rounded-full flex items-center justify-center text-[#254E58]">
-                              <FaUserEdit />
+                          <div className="flex flex-col sm:items-end gap-2">
+                            <div className="px-3 py-1 bg-[#88BDBC]/10 text-[#254E58] text-xs font-medium rounded-full border border-[#88BDBC]/30 flex items-center self-start sm:self-auto">
+                              <span className="w-2 h-2 bg-[#88BDBC] rounded-full mr-1.5"></span>
+                              {entry.language}
                             </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-[#254E58] font-['Montserrat']">
-                                  {entry.editor || "Unknown"}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1 mt-1">
-                                <FaFileCode className="text-[#88BDBC] text-sm" />
-                                <span className="text-[#112D32] font-['Montserrat']">
-                                  {entry.documentName || "Untitled Document"}
-                                </span>
-                              </div>
+                            
+                            <div className="flex gap-2 mt-2">
+                              <button
+                                onClick={() => handleView(entry.roomId)}
+                                className="px-3 py-1 text-white bg-[#88BDBC] rounded-md transition-colors border border-[#88BDBC]/70 font-medium text-sm hover:bg-[#254E58] flex items-center gap-1"
+                                disabled={loading && deletingId === entry._id}
+                              >
+                                View <FaChevronRight className="text-xs" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(entry._id)}
+                                className="px-3 py-1 text-white bg-red-500 rounded-md transition-colors border border-red-400 font-medium text-sm hover:bg-red-600 flex items-center gap-1"
+                                disabled={loading && deletingId === entry._id}
+                              >
+                                {loading && deletingId === entry._id ? (
+                                  <span className="flex items-center gap-1">
+                                    <LoadingSpinner size="small" />
+                                    Deleting...
+                                  </span>
+                                ) : (
+                                  "Delete"
+                                )}
+                              </button>
                             </div>
                           </div>
                         </div>
-                        
-                        <div className="flex flex-col sm:items-end gap-2">
-                          <div className="px-3 py-1 bg-[#88BDBC]/10 text-[#254E58] text-xs font-medium rounded-full border border-[#88BDBC]/30 flex items-center self-start sm:self-auto">
-                            <span className="w-2 h-2 bg-[#88BDBC] rounded-full mr-1.5"></span>
-                            {entry.language}
-                          </div>
-                          
-                          <div className="flex gap-2 mt-2">
-                            <button
-                              onClick={() => handleView(entry.roomId)}
-                              className="px-3 py-1 text-white bg-[#88BDBC] rounded-md transition-colors border border-[#88BDBC]/70 font-medium text-sm hover:bg-[#254E58] flex items-center gap-1"
-                              disabled={loading && deletingId === entry._id}
-                            >
-                              View <FaChevronRight className="text-xs" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(entry._id)}
-                              className="px-3 py-1 text-white bg-red-500 rounded-md transition-colors border border-red-400 font-medium text-sm hover:bg-red-600 flex items-center gap-1"
-                              disabled={loading && deletingId === entry._id}
-                            >
-                              {loading && deletingId === entry._id ? (
-                                <span className="flex items-center gap-1">
-                                  <LoadingSpinner size="small" />
-                                  Deleting...
-                                </span>
-                              ) : (
-                                "Delete"
-                              )}
-                            </button>
-                          </div>
-                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           </div>

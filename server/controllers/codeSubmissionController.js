@@ -1,6 +1,9 @@
 const asyncHandler = require('express-async-handler');
 const CodeSubmission = require('../models/CodeSubmission');
 
+// Import the language formatting function
+const { formatLanguageName } = require('../utils/languageUtils');
+
 /**
  * Save a code submission
  * @route POST /api/submissions
@@ -21,7 +24,7 @@ const saveSubmission = asyncHandler(async (req, res) => {
   const submission = await CodeSubmission.create({
     user: userId,
     code,
-    language,
+    language: formatLanguageName(language),
     input: input || '',
     output: output || '',
     status: status || 'completed',

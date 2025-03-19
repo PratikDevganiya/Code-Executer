@@ -85,8 +85,6 @@ const UserDetails = ({ user, updateUser }) => {
   // Save Updated Data
   const handleSave = async () => {
     try {
-      console.log("Updated Social Links Before Sending:", formData.socialLinks);
-
       // ✅ Prepare the updated data payload
       const updatedData = {
         username: formData.username,
@@ -94,38 +92,14 @@ const UserDetails = ({ user, updateUser }) => {
         country: formData.country,
         role: formData.role,
         bio: formData.bio,
-        socialLinks: formData.socialLinks, // ✅ Ensure correct structure
+        socialLinks: formData.socialLinks,
+        // Include the base64 image directly
+        profileImage: formData.profileImage
       };
 
-      // ✅ Handle profile image separately if selected
-      if (selectedImage) {
-        const imageFormData = new FormData();
-        imageFormData.append("profileImage", selectedImage);
-
-        // ✅ Upload the image and get the URL
-        const imageUploadRes = await axios.put(
-          "http://localhost:5001/api/users/update",
-          imageFormData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-            withCredentials: true,
-          }
-        );
-
-        // console.log("Image Upload Response:", imageUploadRes.data);
-
-        // ✅ Ensure the backend returns a valid profileImage URL
-        if (imageUploadRes.data && imageUploadRes.data.profileImage) {
-          updatedData.profileImage = imageUploadRes.data.profileImage;
-        }
-      }
-
-      // ✅ Now send the entire user data update request
+      // ✅ Send the data update request
       const res = await axios.put(
-        "http://localhost:5001/api/users/update",
+        `${import.meta.env.VITE_API_URL}/users/update`,
         updatedData,
         {
           headers: {
@@ -136,9 +110,8 @@ const UserDetails = ({ user, updateUser }) => {
         }
       );
 
-      // console.log("Updated User Data After Save:", res.data);
-
-      updateUser(res.data); // ✅ Ensure UI updates with latest data
+      // ✅ Update UI with the result
+      updateUser(res.data);
       setIsEditing(false);
     } catch (error) {
       console.error("Profile update failed:", error);
@@ -156,9 +129,11 @@ const UserDetails = ({ user, updateUser }) => {
       <div className="relative w-32 h-32 rounded-full border-2 border-[#88BDBC]/40 shadow-lg overflow-hidden z-10">
         <img
           src={
-            formData.profileImage.startsWith("/uploads/")
-              ? `http://localhost:5001${formData.profileImage}`
-              : formData.profileImage
+            formData.profileImage.startsWith("data:image")
+              ? formData.profileImage
+              : formData.profileImage.startsWith("/uploads/")
+                ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${formData.profileImage}`
+                : formData.profileImage
           }
           alt="Profile"
           className="w-full h-full object-cover"

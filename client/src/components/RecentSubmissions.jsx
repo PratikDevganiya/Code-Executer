@@ -236,74 +236,73 @@ const RecentSubmissions = () => {
             </div>
 
             <div className="bg-white rounded-b-lg p-4">
-              {/* Timeline View with Scrollable Container - Compact height for balanced view */}
-              <div className="relative max-h-[330px] overflow-y-auto pr-2 custom-scrollbar">
-                {/* Timeline line */}
-                <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-[#88BDBC]/30"></div>
-                
-                {filteredSubmissions.map((submission, index) => (
-                  <div key={submission._id} className="mb-6">
-                    {/* Individual Date header */}
-                    <div className="flex items-center mb-3 relative z-10">
-                      <div className="w-6 h-6 rounded-full bg-[#88BDBC] flex items-center justify-center">
-                        <div className="w-3 h-3 bg-white rounded-full"></div>
+              {/* Timeline View with Scrollable Container - Using CSS for continuous line */}
+              <div className="relative h-[330px] timeline-scroll-container">
+                <div className="h-full overflow-y-auto pr-2 custom-scrollbar">
+                  {filteredSubmissions.map((submission, index) => (
+                    <div key={submission._id} className="mb-6 timeline-item">
+                      {/* Individual Date header */}
+                      <div className="flex items-center mb-3 relative z-10">
+                        <div className="w-6 h-6 rounded-full bg-[#88BDBC] flex items-center justify-center">
+                          <div className="w-3 h-3 bg-white rounded-full"></div>
+                        </div>
+                        <div className="ml-4 bg-[#F5F5F5] px-3 py-1 rounded-md text-[#254E58] font-medium font-['Montserrat']">
+                          {formatDate(submission.createdAt)}
+                        </div>
                       </div>
-                      <div className="ml-4 bg-[#F5F5F5] px-3 py-1 rounded-md text-[#254E58] font-medium font-['Montserrat']">
-                        {formatDate(submission.createdAt)}
-                      </div>
-                    </div>
-                    
-                    {/* Individual Submission */}
-                    <div className="ml-10 space-y-3">
-                      <div 
-                        className="bg-white border border-[#88BDBC]/20 rounded-lg p-4 hover:shadow-md transition-all duration-200 relative"
-                      >
-                        <div className="absolute -left-8 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-[#88BDBC]/50 rounded-full"></div>
-                        
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <div
-                                className="w-3 h-3 rounded-full"
-                                style={{
-                                  backgroundColor: languageConfig[submission.language]?.color || '#ccc'
-                                }}
-                              ></div>
-                              <span className="font-['Montserrat'] text-[#254E58] font-medium">
-                                {languageConfig[submission.language]?.name || submission.language}
-                              </span>
-                            </div>
-                            
-                            <div className="bg-[#F5F5F5] p-3 rounded-md mb-2">
-                              <code className="text-xs text-[#112D32] font-mono whitespace-pre-wrap">
-                                {getCodeSnippet(submission.code)}
-                              </code>
-                            </div>
-                          </div>
+                      
+                      {/* Individual Submission */}
+                      <div className="ml-10 space-y-3">
+                        <div 
+                          className="bg-white border border-[#88BDBC]/20 rounded-lg p-4 hover:shadow-md transition-all duration-200 relative"
+                        >
+                          <div className="absolute -left-8 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-[#88BDBC]/50 rounded-full"></div>
                           
-                          <div className="flex flex-col sm:items-end gap-2">
-                            {getStatusBadge(submission.status)}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div
+                                  className="w-3 h-3 rounded-full"
+                                  style={{
+                                    backgroundColor: languageConfig[submission.language]?.color || '#ccc'
+                                  }}
+                                ></div>
+                                <span className="font-['Montserrat'] text-[#254E58] font-medium">
+                                  {languageConfig[submission.language]?.name || submission.language}
+                                </span>
+                              </div>
+                              
+                              <div className="bg-[#F5F5F5] p-3 rounded-md mb-2">
+                                <code className="text-xs text-[#112D32] font-mono whitespace-pre-wrap">
+                                  {getCodeSnippet(submission.code)}
+                                </code>
+                              </div>
+                            </div>
                             
-                            <div className="flex gap-2 mt-2">
-                              <button
-                                onClick={() => handleViewSubmission(submission)}
-                                className="px-3 py-1 text-white bg-[#88BDBC] rounded-md transition-colors border border-[#88BDBC]/70 font-medium text-sm hover:bg-[#254E58] flex items-center gap-1"
-                              >
-                                View <FaChevronRight className="text-xs" />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(submission._id)}
-                                className="px-3 py-1 text-white bg-red-500 rounded-md transition-colors border border-red-400 font-medium text-sm hover:bg-red-600"
-                              >
-                                Delete
-                              </button>
+                            <div className="flex flex-col sm:items-end gap-2">
+                              {getStatusBadge(submission.status)}
+                              
+                              <div className="flex gap-2 mt-2">
+                                <button
+                                  onClick={() => handleViewSubmission(submission)}
+                                  className="px-3 py-1 text-white bg-[#88BDBC] rounded-md transition-colors border border-[#88BDBC]/70 font-medium text-sm hover:bg-[#254E58] flex items-center gap-1"
+                                >
+                                  View <FaChevronRight className="text-xs" />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(submission._id)}
+                                  className="px-3 py-1 text-white bg-red-500 rounded-md transition-colors border border-red-400 font-medium text-sm hover:bg-red-600"
+                                >
+                                  Delete
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           </>

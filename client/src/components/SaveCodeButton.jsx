@@ -3,7 +3,7 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import LoadingSpinner from "./LoadingSpinner";
 
-const SaveCodeButton = ({ code, language, input, output, submissionId, isCollaborative, roomId }) => {
+const SaveCodeButton = ({ code, language, input, output, submissionId, isCollaborative, roomId, roomParticipants = [] }) => {
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -34,31 +34,71 @@ const SaveCodeButton = ({ code, language, input, output, submissionId, isCollabo
       
       if (isCollaborative && roomId) {
         // Save as collaboration
+        const currentUser = user.username || user.email || 'Anonymous';
+        
+        // Create a list of participants including the current user and any provided roomParticipants
+        const participantsList = [...new Set([currentUser, ...roomParticipants])];
+        
         const collaborationData = {
           roomId,
           code,
           language,
           documentName: `${language.charAt(0).toUpperCase() + language.slice(1)} Collaboration`,
-          editor: user.username || user.email,
+          editor: currentUser,
+          participants: participantsList,
           timestamp: new Date().toISOString()
         };
         
-        const response = await axios.post(
-          "http://localhost:5001/api/code/collaborations", 
-          collaborationData,
-          {
-            headers: { 
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-              'Content-Type': 'application/json'
+        try {
+          const response = await axios.post(
+            "http://localhost:5001/api/code/collaborations", 
+            collaborationData,
+            {
+              headers: { 
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                'Content-Type': 'application/json'
+              }
             }
+          );
+  
+          if (!response.data) {
+            throw new Error("Failed to save collaboration");
           }
-        );
-
-        if (!response.data) {
-          throw new Error("Failed to save collaboration");
+  
+          console.log("Collaboration saved/updated successfully:", response.data);
+          
+          // Set saved state to true even if there was a 409 error (already exists)
+          setSaved(true);
+          setButtonText("Saved!");
+          
+          // Reset button after 5 seconds
+          setTimeout(() => {
+            setSaved(false);
+            setButtonText(`Save ${isCollaborative ? 'Collaboration' : 'Code'}`);
+          }, 5000);
+        } catch (collabError) {
+          console.error("Error saving collaboration:", collabError);
+          
+          // If it's a 409 error (conflict/duplicate), we can treat it as a success
+          if (collabError.response?.status === 409) {
+            console.log("Collaboration already exists, treating as success");
+            setSaved(true);
+            setButtonText("Saved!");
+            
+            // Reset button after 5 seconds
+            setTimeout(() => {
+              setSaved(false);
+              setButtonText(`Save ${isCollaborative ? 'Collaboration' : 'Code'}`);
+            }, 5000);
+            return;
+          }
+          
+          // For other errors, show an error message
+          const errorMessage = collabError.response?.data?.message || collabError.message || "Failed to save collaboration";
+          alert(errorMessage);
+          setSaved(false);
+          setButtonText(`Save ${isCollaborative ? 'Collaboration' : 'Code'}`);
         }
-
-        console.log("Collaboration saved/updated successfully:", response.data);
       } else {
         // Save as normal submission
         const submissionData = {
@@ -92,16 +132,17 @@ const SaveCodeButton = ({ code, language, input, output, submissionId, isCollabo
             }
           );
         }
+        
+        // Set saved state to true after successful submission
+        setSaved(true);
+        setButtonText("Saved!");
+        
+        // Reset button after 5 seconds
+        setTimeout(() => {
+          setSaved(false);
+          setButtonText(`Save ${isCollaborative ? 'Collaboration' : 'Code'}`);
+        }, 5000);
       }
-      
-      setSaved(true);
-      setButtonText("Saved!");
-      
-      // Reset button after 5 seconds
-      setTimeout(() => {
-        setSaved(false);
-        setButtonText(`Save ${isCollaborative ? 'Collaboration' : 'Code'}`);
-      }, 5000);
     } catch (error) {
       console.error('Error saving code:', error);
       const errorMessage = error.response?.data?.message || error.message || `Failed to save ${isCollaborative ? 'collaboration' : 'code'}`;

@@ -8,25 +8,49 @@ const codeSubmissionSchema = new mongoose.Schema({
   },
   code: {
     type: String,
-    required: true
+    required: true,
+    trim: true
   },
   language: {
     type: String,
-    required: true
+    required: true,
+    enum: [
+      "JavaScript", "javascript",
+      "TypeScript", "typescript",
+      "Python", "python",
+      "Java", "java",
+      "C", "c",
+      "C++", "c++",
+      "C#", "c#",
+      "PHP", "php",
+      "Go", "go",
+      "Rust", "rust",
+      "Swift", "swift",
+      "Kotlin", "kotlin"
+    ]
   },
-  input: String,
-  output: String,
+  input: {
+    type: String,
+    default: ""
+  },
+  output: {
+    type: String,
+    default: "No Output"
+  },
   status: {
     type: String,
-    enum: ['completed', 'error', 'runtime_error'],
+    enum: ['pending', 'completed', 'error', 'timeout', 'runtime_error'],
     default: 'completed'
   },
-  executionTime: Number,
-  createdAt: {
-    type: Date,
-    default: Date.now
+  executionTime: {
+    type: Number,
+    default: 0
+  },
+  isFinalSubmission: {
+    type: Boolean,
+    default: false // false = normal execution, true = final submission
   }
-});
+}, { timestamps: true }); // Add timestamps for createdAt and updatedAt
 
 // Index for faster queries
 codeSubmissionSchema.index({ user: 1, createdAt: -1 });

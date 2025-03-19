@@ -21,19 +21,21 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    // 🔹 Profile Image (Updated Validation)
+    // 🔹 Profile Image (Updated for Base64 Support)
     profileImage: {
       type: String,
       default: "",
       validate: {
         validator: function (value) {
           return (
-            /^https?:\/\/.+\.(jpg|jpeg|png|gif|svg)$/i.test(value) || 
-            /^\/uploads\/.+\.(jpg|jpeg|png|gif|svg)$/i.test(value) || 
-            value === ""
+            /^data:image\/(jpeg|jpg|png|gif|webp);base64,/.test(value) || // Base64 images 
+            /^https?:\/\/.+\.(jpg|jpeg|png|gif|svg|webp)$/i.test(value) || // URLs
+            /^\/uploads\/.+\.(jpg|jpeg|png|gif|svg|webp)$/i.test(value) || // Legacy local paths
+            value === "" || // Empty string
+            value === "/default-avatar.svg" // Default avatar
           );
         },
-        message: "Invalid image URL format",
+        message: "Invalid image format",
       },
     },
     country: { type: String, default: "" },
@@ -55,7 +57,7 @@ const userSchema = new mongoose.Schema(
     submissions: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Submission",
+        ref: "CodeSubmission",
       },
     ],
   },

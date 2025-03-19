@@ -1,8 +1,9 @@
 const axios = require('axios');
-const Submission = require("../models/Submission");
+const CodeSubmission = require("../models/CodeSubmission");
 const { runCode } = require("../services/codeExecutionService");
 const Collaboration = require('../models/Collaboration');
 const asyncHandler = require('express-async-handler');
+const { formatLanguageName } = require('../utils/languageUtils');
 
 // @desc    Execute code
 // @route   POST /api/code/execute
@@ -46,10 +47,14 @@ const executeCode = asyncHandler(async (req, res) => {
     let newSubmission;
     try {
       console.log("📝 Saving submission to database...");
-      newSubmission = await Submission.create({
+      
+      // Convert language name to proper case
+      const formattedLanguage = formatLanguageName(language);
+      
+      newSubmission = await CodeSubmission.create({
         user: req.user._id,
         code,
-        language,
+        language: formattedLanguage,
         input,
         output: result.output,
         status: result.status,
@@ -85,7 +90,7 @@ const getSubmissions = asyncHandler(async (req, res) => {
     }
 
     // ✅ Fetch submissions for the authenticated user (optimized query)
-    const submissions = await Submission.find({ user: req.user._id })
+    const submissions = await CodeSubmission.find({ user: req.user._id })
       .select("-__v") // Exclude MongoDB version field
       .sort({ createdAt: -1 })
       .lean(); // Optimize performance by returning plain JS objects
@@ -111,10 +116,13 @@ const saveSubmission = asyncHandler(async (req, res) => {
   }
 
   try {
-    const submission = await Submission.create({
+    // Convert language name to proper case
+    const formattedLanguage = formatLanguageName(language);
+    
+    const submission = await CodeSubmission.create({
       user: userId,
       code,
-      language,
+      language: formattedLanguage,
       input,
       output
     });
@@ -129,7 +137,7 @@ const saveSubmission = asyncHandler(async (req, res) => {
 // Get submission by ID
 const getSubmissionById = asyncHandler(async (req, res) => {
   try {
-    const submission = await Submission.findById(req.params.id);
+    const submission = await CodeSubmission.findById(req.params.id);
     
     if (!submission) {
       return res.status(404).json({ message: "Submission not found" });
@@ -150,7 +158,7 @@ const getSubmissionById = asyncHandler(async (req, res) => {
 // Delete submission
 const deleteSubmission = asyncHandler(async (req, res) => {
   try {
-    const submission = await Submission.findById(req.params.id);
+    const submission = await CodeSubmission.findById(req.params.id);
     
     if (!submission) {
       return res.status(404).json({ message: "Submission not found" });
@@ -161,7 +169,7 @@ const deleteSubmission = asyncHandler(async (req, res) => {
       return res.status(403).json({ message: "Not authorized to delete this submission" });
     }
 
-    await submission.remove();
+    await submission.deleteOne();
     res.status(200).json({ message: "Submission deleted" });
   } catch (error) {
     console.error("Delete Error:", error);
@@ -186,7 +194,7 @@ const getUserCollaborations = async (req, res) => {
 // Save new collaboration (maintain limit of 50)
 const saveCollaboration = async (req, res) => {
   try {
-    const { roomId, code, language, documentName, editor, timestamp } = req.body;
+    const { roomId, code, language, documentName, editor, participants, timestamp } = req.body;
 
     if (!roomId || !code || !language || !editor) {
       return res.status(400).json({ 
@@ -195,28 +203,27 @@ const saveCollaboration = async (req, res) => {
       });
     }
 
-    // Check if collaboration with this roomId already exists
-    let collaboration = await Collaboration.findOne({
-      roomId,
-      user: req.user._id
-    });
+    // Use findOneAndUpdate with upsert to handle race conditions
+    // This will either update an existing document or create a new one
+    const update = {
+      $set: {
+        code,
+        language,
+        documentName: documentName || `${language.charAt(0).toUpperCase() + language.slice(1)} Collaboration`,
+        editor,
+        timestamp: timestamp || new Date()
+      }
+    };
 
-    if (collaboration) {
-      // Update existing collaboration
-      collaboration.code = code;
-      collaboration.language = language;
-      collaboration.documentName = documentName;
-      collaboration.editor = editor;
-      collaboration.timestamp = timestamp || new Date();
-      await collaboration.save();
-      
-      return res.status(200).json(collaboration);
+    // If participants are provided, add them to the existing array without duplicates
+    if (participants && Array.isArray(participants)) {
+      update.$addToSet = { participants: { $each: participants } };
     }
 
-    // If not exists, check count and potentially delete oldest
+    // Check if we need to delete an old collaboration to maintain the limit
     const count = await Collaboration.countDocuments({ user: req.user._id });
-
     if (count >= 50) {
+      // Find and delete the oldest collaboration
       const oldest = await Collaboration.findOne({ user: req.user._id })
         .sort({ createdAt: 1 });
       if (oldest) {
@@ -224,20 +231,29 @@ const saveCollaboration = async (req, res) => {
       }
     }
 
-    // Create new collaboration
-    collaboration = await Collaboration.create({
-      user: req.user._id,
-      roomId,
-      code,
-      language,
-      documentName,
-      editor,
-      timestamp: timestamp || new Date()
-    });
+    // Use findOneAndUpdate with upsert to handle race conditions
+    const collaboration = await Collaboration.findOneAndUpdate(
+      { roomId, user: req.user._id },
+      update,
+      { 
+        new: true,        // Return the updated document
+        upsert: true,     // Create if it doesn't exist
+        runValidators: true // Run schema validators
+      }
+    );
 
-    res.status(201).json(collaboration);
+    return res.status(200).json(collaboration);
   } catch (error) {
     console.error("Error saving collaboration:", error);
+    
+    // Special handling for duplicate key errors
+    if (error.code === 11000) {
+      return res.status(409).json({ 
+        message: "Duplicate collaboration", 
+        error: "A collaboration with this room ID already exists" 
+      });
+    }
+    
     res.status(500).json({ 
       message: "Error saving collaboration", 
       error: error.message 

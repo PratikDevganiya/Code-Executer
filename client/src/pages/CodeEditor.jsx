@@ -10,6 +10,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { FaUsers, FaCopy, FaCheck, FaComments, FaPaperPlane, FaSignInAlt } from "react-icons/fa";
 import { io } from 'socket.io-client';
 
+// Debug mode flag - set to false to reduce console output
+const DEBUG_MODE = false;
+
 const CodeEditor = () => {
   const { user } = useAuth();
   const location = useLocation();
@@ -18,9 +21,51 @@ const CodeEditor = () => {
   const submissionData = location.state?.submissionData;
   const submissionId = location.state?.submissionId;
 
-  const [code, setCode] = useState(submissionData?.code || "// Start coding here...");
-  const [language, setLanguage] = useState(submissionData?.language || "javascript");
-  const [input, setInput] = useState(submissionData?.input || "");
+  const [code, setCode] = useState(() => {
+    // For collaborative mode, try to get code from localStorage using roomId
+    if (urlRoomId) {
+      const savedCode = localStorage.getItem(`code_${urlRoomId}`);
+      if (savedCode) return savedCode;
+    }
+    
+    // For normal mode, try to get code from localStorage
+    const savedCode = localStorage.getItem('code');
+    if (savedCode) return savedCode;
+    
+    // Fall back to submission data or default
+    return submissionData?.code || "// Start coding here...";
+  });
+  
+  const [language, setLanguage] = useState(() => {
+    // For collaborative mode, try to get language from localStorage using roomId
+    if (urlRoomId) {
+      const savedLanguage = localStorage.getItem(`language_${urlRoomId}`);
+      if (savedLanguage) return savedLanguage;
+    }
+    
+    // For normal mode, try to get language from localStorage
+    const savedLanguage = localStorage.getItem('language');
+    if (savedLanguage) return savedLanguage;
+    
+    // Fall back to submission data or default
+    return submissionData?.language || "javascript";
+  });
+  
+  const [input, setInput] = useState(() => {
+    // For collaborative mode, try to get input from localStorage using roomId
+    if (urlRoomId) {
+      const savedInput = localStorage.getItem(`input_${urlRoomId}`);
+      if (savedInput) return savedInput;
+    }
+    
+    // For normal mode, try to get input from localStorage
+    const savedInput = localStorage.getItem('input');
+    if (savedInput) return savedInput;
+    
+    // Fall back to submission data or default
+    return submissionData?.input || "";
+  });
+  
   const [output, setOutput] = useState(submissionData?.output || "");
   const [loading, setLoading] = useState(false);
   const [theme, setTheme] = useState("vs-dark");
@@ -39,6 +84,8 @@ const CodeEditor = () => {
   const [justJoined, setJustJoined] = useState(false);
   const [displayRoomId, setDisplayRoomId] = useState('');
   const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
+  const [userCount, setUserCount] = useState(1);
+  const [roomParticipants, setRoomParticipants] = useState([]);
 
   const monaco = useMonaco();
 
@@ -47,36 +94,63 @@ const CodeEditor = () => {
     if (urlRoomId) {
       setIsCollaborative(true);
       setRoomId(urlRoomId);
+      
+      // Check if this is a refresh of a room we joined
+      const joinedRoomId = localStorage.getItem('joinedRoomId');
+      
+      // If we have evidence of joining this room
+      if (joinedRoomId === urlRoomId) {
+        setHasJoinedRoom(true);
+        setDisplayRoomId(urlRoomId);
+      }
     }
   }, [urlRoomId]);
 
   // Socket connection for collaboration
   useEffect(() => {
     if (isCollaborative && roomId) {
+      if (DEBUG_MODE) {
+        console.log('Setting up socket connection for room:', roomId);
+      }
+      
       const newSocket = io('http://localhost:5001', {
         withCredentials: true
       });
 
       newSocket.on('connect', () => {
-        console.log('Connected to WebSocket');
-        newSocket.emit('join-room', roomId);
+        if (DEBUG_MODE) {
+          console.log('Connected to WebSocket with ID:', newSocket.id);
+        }
+        // Make sure we're sending the correct data format to the server
+        newSocket.emit('join-room', {
+          roomId,
+          username: user?.username || user?.email || 'Anonymous'
+        });
       });
 
-      newSocket.on('code-update', ({ code: newCode, userId }) => {
-        if (userId !== newSocket.id) {
-          setCode(newCode);
+      newSocket.on('connect_error', (error) => {
+        console.error('Socket connection error:', error);
+      });
+
+      newSocket.on('error', (error) => {
+        console.error('Socket error:', error);
+      });
+
+      newSocket.on('disconnect', (reason) => {
+        if (DEBUG_MODE) {
+          console.log('Socket disconnected:', reason);
         }
       });
 
-      newSocket.on('output-update', ({ output: newOutput, userId }) => {
-        if (userId !== newSocket.id) {
-          setOutput(newOutput);
+      newSocket.on('code-update', (data) => {
+        if (DEBUG_MODE) {
+          console.log('Received code update:', data);
         }
-      });
-
-      newSocket.on('input-update', ({ input: newInput, userId }) => {
-        if (userId !== newSocket.id) {
-          setInput(newInput);
+        if (data.userId !== newSocket.id) {
+          if (DEBUG_MODE) {
+            console.log('Setting code from another user');
+          }
+          setCode(data.code);
         }
       });
 
@@ -84,35 +158,73 @@ const CodeEditor = () => {
         setMessages(prev => [...prev, message]);
       });
 
-      newSocket.on('user-joined', ({ userId, timestamp }) => {
-        setActiveUsers(prev => [...prev, { userId, timestamp }]);
-      });
-      
-      newSocket.on('user-left', ({ userId }) => {
-        setActiveUsers(prev => prev.filter(user => user.userId !== userId));
-      });
-      
-      newSocket.on('user-count-update', ({ count }) => {
-        // Direct count from server is more reliable than client-side tracking
-        setActiveUsers(prev => {
-          // If we have more users in our state than the server reports,
-          // trim our list to match the server count (minus ourselves)
-          if (prev.length > count - 1) {
-            return prev.slice(0, count - 1);
+      newSocket.on('user-joined', ({ userId, username, timestamp }) => {
+        setActiveUsers(prev => [...prev, { userId, username, timestamp }]);
+        // Add to participants list if not already there
+        setRoomParticipants(prev => {
+          if (!prev.includes(username)) {
+            return [...prev, username];
           }
           return prev;
         });
+      });
+      
+      newSocket.on('user-left', ({ userId, username }) => {
+        setActiveUsers(prev => prev.filter(user => user.userId !== userId));
+        // We don't remove from participants list to keep history
+      });
+      
+      newSocket.on('user-list-update', ({ users, count }) => {
+        if (DEBUG_MODE) {
+          console.log('User list update received:', users);
+        }
+        // Update the user count state
+        setUserCount(count);
+        
+        // Update active users with the full list from server
+        setActiveUsers(users.filter(u => u.userId !== newSocket.id));
+        
+        // Update participants list with usernames
+        const usernames = users.map(u => u.username).filter(Boolean);
+        setRoomParticipants(prev => {
+          const uniqueUsernames = new Set([...prev, ...usernames]);
+          return Array.from(uniqueUsernames);
+        });
+      });
+
+      newSocket.on('input-update', (data) => {
+        if (DEBUG_MODE) {
+          console.log('Received input update:', data);
+        }
+        if (data.userId !== newSocket.id) {
+          setInput(data.input);
+        }
+      });
+
+      newSocket.on('output-update', (data) => {
+        if (DEBUG_MODE) {
+          console.log('Received output update:', data);
+        }
+        if (data.userId !== newSocket.id) {
+          setOutput(data.output);
+        }
       });
 
       setSocket(newSocket);
 
       // Clean up on unmount or when changing rooms
       return () => {
-        newSocket.emit('leave-room', roomId);
+        if (DEBUG_MODE) {
+          console.log('Leaving room:', roomId);
+        }
+        newSocket.emit('leave-room', {
+          roomId,
+          userId: newSocket.id
+        });
         newSocket.close();
       };
     }
-  }, [isCollaborative, roomId]);
+  }, [isCollaborative, roomId, user]);
 
   // Define custom themes
   useEffect(() => {
@@ -191,6 +303,33 @@ const CodeEditor = () => {
     }
   }, [monaco, theme]);
 
+  // Save code to localStorage when it changes
+  useEffect(() => {
+    if (isCollaborative && roomId) {
+      localStorage.setItem(`code_${roomId}`, code);
+    } else {
+      localStorage.setItem('code', code);
+    }
+  }, [code, isCollaborative, roomId]);
+  
+  // Save language to localStorage when it changes
+  useEffect(() => {
+    if (isCollaborative && roomId) {
+      localStorage.setItem(`language_${roomId}`, language);
+    } else {
+      localStorage.setItem('language', language);
+    }
+  }, [language, isCollaborative, roomId]);
+  
+  // Save input to localStorage when it changes
+  useEffect(() => {
+    if (isCollaborative && roomId) {
+      localStorage.setItem(`input_${roomId}`, input);
+    } else {
+      localStorage.setItem('input', input);
+    }
+  }, [input, isCollaborative, roomId]);
+
   const handleSubmit = async () => {
     if (!user) {
       setOutput("⚠ Please login to execute code");
@@ -210,10 +349,14 @@ const CodeEditor = () => {
       setOutput(outputResult);
       
       // Emit output to all connected users if in collaborative mode
-      if (isCollaborative && socket) {
+      if (isCollaborative && socket && socket.connected) {
+        if (DEBUG_MODE) {
+          console.log('Emitting output update to room:', roomId);
+        }
         socket.emit('output-update', {
           roomId,
-          output: outputResult
+          output: outputResult,
+          userId: socket.id
         });
       }
     } catch (error) {
@@ -221,10 +364,14 @@ const CodeEditor = () => {
       setOutput(errorOutput);
       
       // Emit error output to all connected users if in collaborative mode
-      if (isCollaborative && socket) {
+      if (isCollaborative && socket && socket.connected) {
+        if (DEBUG_MODE) {
+          console.log('Emitting error output update to room:', roomId);
+        }
         socket.emit('output-update', {
           roomId,
-          output: errorOutput
+          output: errorOutput,
+          userId: socket.id
         });
       }
     } finally {
@@ -250,14 +397,24 @@ const CodeEditor = () => {
       }
       // Close socket connection
       if (socket) {
-        socket.emit('leave-room', roomId);
+        if (DEBUG_MODE) {
+          console.log('Leaving room from toggleCollaborativeMode:', roomId);
+        }
+        socket.emit('leave-room', {
+          roomId,
+          userId: socket.id
+        });
         socket.close();
         setSocket(null);
       }
       // Reset states
       setActiveUsers([]);
+      setUserCount(1);
       setHasJoinedRoom(false);
       setDisplayRoomId('');
+      
+      // Clear localStorage
+      localStorage.removeItem('joinedRoomId');
     }
     setIsCollaborative(!isCollaborative);
     setShowChat(false); // Reset chat visibility when toggling collaboration mode
@@ -271,9 +428,14 @@ const CodeEditor = () => {
     
     setRoomIdError('');
     const trimmedRoomId = manualRoomId.trim();
-    setDisplayRoomId(trimmedRoomId);
+    
+    // Set states to show "Joined" confirmation
     setJustJoined(true);
     setHasJoinedRoom(true);
+    setDisplayRoomId(trimmedRoomId);
+    
+    // Store joined room ID in localStorage for persistence
+    localStorage.setItem('joinedRoomId', trimmedRoomId);
     
     // Reset the "Joined" state after 2 seconds
     setTimeout(() => {
@@ -291,27 +453,48 @@ const CodeEditor = () => {
     try {
       if (!user) return;
       
-      const response = await axios.post(
-        "http://localhost:5001/api/code/collaborations",
-        {
-          roomId: sessionId,
-          code: code,
-          language,
-          documentName: `${language.charAt(0).toUpperCase() + language.slice(1)} Collaboration`,
-          editor: user.username || user.email,
-          timestamp: new Date().toISOString()
-        },
-        {
-          headers: { 
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      // Get current user's name
+      const currentUser = user?.username || user?.email || 'Anonymous';
       
-      console.log("Collaboration saved:", response.data);
-      // Don't set displayRoomId here as this is for creating a new room, not joining
-      return response.data;
+      // Create a list of participants including the current user and all room participants
+      const participantsList = [...new Set([currentUser, ...roomParticipants])];
+      
+      try {
+        const response = await axios.post(
+          "http://localhost:5001/api/code/collaborations",
+          {
+            roomId: sessionId,
+            code: code,
+            language,
+            documentName: `${language.charAt(0).toUpperCase() + language.slice(1)} Collaboration`,
+            editor: currentUser,
+            participants: participantsList,
+            timestamp: new Date().toISOString()
+          },
+          {
+            headers: { 
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        if (DEBUG_MODE) {
+          console.log("Collaboration saved:", response.data);
+        }
+        return response.data;
+      } catch (collabError) {
+        console.error("Error in saveCollaborationSession:", collabError);
+        
+        // If it's a server error but not a duplicate key error, log it but don't throw
+        // We don't want to prevent the user from collaborating just because saving failed
+        if (DEBUG_MODE) {
+          console.log("Continuing despite collaboration save error");
+        }
+        
+        // Return null to indicate saving failed, but don't throw an error
+        return null;
+      }
     } catch (error) {
       console.error("Failed to save collaboration session:", error);
       return null;
@@ -329,21 +512,28 @@ const CodeEditor = () => {
 
   const handleEditorChange = (value) => {
     setCode(value);
-    if (isCollaborative && socket) {
-      socket.emit('code-change', {
+    if (isCollaborative && socket && socket.connected) {
+      if (DEBUG_MODE) {
+        console.log('Emitting code update to room:', roomId, 'with socket ID:', socket.id);
+      }
+      socket.emit('code-update', {
         roomId,
-        code: value
+        code: value,
+        userId: socket.id
       });
     }
   };
 
   const sendMessage = (e) => {
     e.preventDefault();
-    if (newMessage.trim() && socket) {
+    if (newMessage.trim() && socket && socket.connected) {
+      if (DEBUG_MODE) {
+        console.log('Sending chat message to room:', roomId);
+      }
       socket.emit('chat-message', {
         roomId,
         message: newMessage,
-        username: user.username || user.email
+        username: user?.username || user?.email || 'Anonymous'
       });
       setNewMessage('');
     }
@@ -352,7 +542,7 @@ const CodeEditor = () => {
   return (
     <div className="min-h-screen bg-[#88BDBC] p-3 flex flex-col items-center font-['Poppins']">
       {/* Language & Theme Selectors */}
-      <div className="w-[65%] flex justify-between mb-3">
+      <div className="w-[65%] macbook-width flex justify-between mb-3">
         <div className="flex gap-2">
           <select
             className="w-44 px-2 py-1.5 bg-[#254E58] text-white font-semibold rounded-md 
@@ -422,30 +612,31 @@ const CodeEditor = () => {
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={manualRoomId}
-                    onChange={(e) => setManualRoomId(e.target.value)}
-                    placeholder="Enter Room ID"
-                    className="px-2 py-1.5 bg-white text-[#254E58] rounded-md border border-[#254E58]/30 focus:outline-none focus:ring-1 focus:ring-[#88BDBC] text-sm w-40"
-                  />
-                  {roomIdError && (
-                    <div className="absolute -bottom-5 left-0 text-xs text-red-500">
-                      {roomIdError}
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={joinExistingRoom}
-                  className="flex items-center gap-1.5 px-2 py-1.5 bg-white text-[#254E58] rounded-md hover:bg-[#254E58] hover:text-white transition-colors text-sm"
-                  title="Join existing collaboration room"
-                >
-                  <FaSignInAlt />
-                  Join Room
-                </button>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={manualRoomId}
+                  onChange={(e) => setManualRoomId(e.target.value)}
+                  placeholder="Enter Room ID"
+                  className="px-2 py-1.5 bg-white text-[#254E58] rounded-md border border-[#254E58]/30 focus:outline-none focus:ring-1 focus:ring-[#88BDBC] text-sm w-40"
+                />
+                {roomIdError && (
+                  <div className="absolute -bottom-5 left-0 text-xs text-red-500">
+                    {roomIdError}
+                  </div>
+                )}
               </div>
+            )}
+            
+            {!hasJoinedRoom && (
+              <button
+                onClick={joinExistingRoom}
+                className="flex items-center gap-1.5 px-2 py-1.5 bg-white text-[#254E58] rounded-md hover:bg-[#254E58] hover:text-white transition-colors text-sm"
+                title="Join existing collaboration room"
+              >
+                <FaSignInAlt />
+                Join Room
+              </button>
             )}
             
             <button
@@ -477,7 +668,7 @@ const CodeEditor = () => {
       </div>
 
       {/* Main Container - Editor (Left) | Input & Output (Right) */}
-      <div className="w-[65%] grid grid-cols-1 lg:grid-cols-10 gap-3">
+      <div className="w-[65%] macbook-width grid grid-cols-1 lg:grid-cols-10 gap-3">
         {/* Code Editor - Left Side */}
         <div className="lg:col-span-7 border border-[#88BDBC] rounded-lg overflow-hidden shadow-md flex flex-col">
           {isCollaborative && (
@@ -485,7 +676,7 @@ const CodeEditor = () => {
               <div className="flex items-center gap-2">
                 <FaUsers className="text-xs" />
                 <span>
-                  {activeUsers.length + 1} users online
+                  {userCount} users online
                 </span>
               </div>
             </div>
@@ -542,10 +733,14 @@ const CodeEditor = () => {
               onChange={(e) => {
                 const newInput = e.target.value;
                 setInput(newInput);
-                if (isCollaborative && socket) {
-                  socket.emit('input-change', {
+                if (isCollaborative && socket && socket.connected) {
+                  if (DEBUG_MODE) {
+                    console.log('Emitting input update to room:', roomId);
+                  }
+                  socket.emit('input-update', {
                     roomId,
-                    input: newInput
+                    input: newInput,
+                    userId: socket.id
                   });
                 }
               }}
@@ -580,6 +775,7 @@ const CodeEditor = () => {
               submissionId={submissionId}
               isCollaborative={isCollaborative}
               roomId={roomId}
+              roomParticipants={roomParticipants}
             />
           </div>
         </div>
@@ -587,9 +783,9 @@ const CodeEditor = () => {
 
       {/* Chat Panel - Fixed Position */}
       {isCollaborative && showChat && (
-        <div className="fixed top-[135px] right-[0.5%] w-[280px] h-[42vh] border border-[#254E58]/30 rounded-lg shadow-md flex flex-col overflow-hidden z-10">
+        <div className="fixed top-[135px] right-[2%] w-[280px] h-[42vh] border border-[#254E58]/30 rounded-lg shadow-md flex flex-col overflow-hidden z-10">
           <div className="px-2 py-1.5 bg-[#254E58] border-b border-[#88BDBC]/30 text-white text-sm flex justify-between items-center">
-            <span>Chat ({activeUsers.length + 1} users)</span>
+            <span>Chat ({userCount} users)</span>
             <button 
               onClick={toggleChat}
               className="text-white hover:text-[#88BDBC] transition-colors text-xs"
