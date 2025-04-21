@@ -1,10 +1,144 @@
 @import "tailwindcss";
 
-/* MacBook Air M1 minor width adjustments */
+/* MacBook Air M1 specific adjustments */
 @media screen and (min-width: 1280px) and (max-width: 1440px) {
   .macbook-width {
-    width: 75% !important;
+    width: 85% !important;
+    max-width: 1200px;
   }
+  
+  /* Remove button color overrides to maintain original theme */
+  /* Adjust only layout properties */
+  .button-container {
+    display: flex !important;
+    gap: 8px !important;
+  }
+  
+  /* Adjust file explorer width without changing colors */
+  .file-explorer {
+    width: 264px !important;
+  }
+  
+  /* Fix sizing for consistent layout */
+  .editor-container {
+    flex: 1 !important;
+  }
+  
+  /* Maintain original panel heights without color changes */
+  .output-panel {
+    height: 48% !important;
+  }
+  
+  .input-panel {
+    height: 38% !important; 
+  }
+  
+  /* Fix action buttons dimensions without changing colors */
+  button.py-3 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+  
+  /* Ensure consistent spacing */
+  .main-content {
+    display: flex !important;
+    gap: 0.75rem !important;
+  }
+  
+  /* Right panel sizing and spacing only */
+  .right-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+  
+  /* Chat panel positioning without changing colors */
+  .chat-panel {
+    top: 135px !important;
+    right: 16px !important;
+    width: 280px !important;
+  }
+  
+  /* Enhanced select menus for MacBook Air M1 */
+  select {
+    appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: calc(100% - 8px) center !important;
+    background-size: 16px !important;
+    padding-right: 28px !important;
+    min-width: 150px !important;
+  }
+  
+  /* File manager button minimum width */
+  button.file-manager-btn {
+    min-width: 140px !important;
+  }
+  
+  /* Ensure dropdown menus have proper height and text size for macOS */
+  select, button {
+    height: 36px !important;
+    font-size: 0.875rem !important; /* 14px */
+    line-height: 1.25rem !important;
+  }
+  
+  /* Improve dropdown menu contrast */
+  select option {
+    background-color: #254E58 !important;
+    color: white !important;
+  }
+  
+  /* Ensure proper border radius for macOS style */
+  select, button {
+    border-radius: 6px !important;
+  }
+  
+  /* Fix editor height for MacBook Air M1 */
+  .monaco-editor, .monaco-editor-background, .monaco-editor .inputarea.ime-input {
+    height: 100% !important;
+  }
+  
+  /* Adjust editor container height to ensure it fills available space */
+  .monaco-editor-container, .monaco-editor, .overflow-guard {
+    height: 100% !important;
+  }
+  
+  /* Fix for editor wrapper to match container height */
+  .monaco-editor .overflow-guard {
+    height: 100% !important;
+  }
+}
+
+/* Full-height editor for all screen sizes */
+.lg\:col-span-7 {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.h-\[78vh\] {
+  height: 78vh !important;
+}
+
+/* Fix the monaco editor root element to take full height */
+.monaco-editor, 
+.monaco-editor .overflow-guard,
+.monaco-editor-background {
+  height: 100% !important;
+}
+
+/* Override height attributes */
+[data-monaco-editor-root] {
+  height: 100% !important;
+}
+
+/* Fix the editor to take full available height */
+.react-monaco-editor-container {
+  height: 100% !important;
+}
+
+/* Override inline height for editors */
+.monaco-editor[style] {
+  height: 100% !important;
 }
 
 /* Timeline continuous line styles */
@@ -663,4 +797,18 @@
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: #88BDBC #f1f1f1;
+}
+
+/* Additional styles to match large screen layout dimensions */
+.editor-nav-button {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  font-size: 0.875rem !important;
+  padding: 0.5rem 0.75rem !important;
+}
+
+.editor-input {
+  font-size: 0.875rem !important;
+  padding: 0.5rem 0.75rem !important;
 }

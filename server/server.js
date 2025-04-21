@@ -222,14 +222,18 @@ app.get("/", (req, res) => {
 });
 
 // ✅ Import Routes
-const codeRoutes = require("./routes/codeRoutes");
-const userRoutes = require("./routes/userRoutes");
+const userRoutes = require('./routes/userRoutes');
+const codeRoutes = require('./routes/codeRoutes');
 const codeSubmissionRoutes = require('./routes/codeSubmissionRoutes');
+const shareRoutes = require('./routes/shareRoutes');
+const fileRoutes = require('./routes/fileRoutes');
 
 // Routes
 app.use('/api/users', userRoutes); // This includes auth routes (login/register)
 app.use('/api/code', codeRoutes);
 app.use('/api/submissions', codeSubmissionRoutes);
+app.use('/api/share', shareRoutes);
+app.use('/api/files', fileRoutes);
 
 // ✅ Code Execution Routes
 const { executeCode, getSupportedLanguages } = require("./utils/codeExecutor");

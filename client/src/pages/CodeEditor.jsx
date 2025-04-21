@@ -1,14 +1,18 @@
 // client/src/pages/CodeEditor.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Editor, { useMonaco } from "@monaco-editor/react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import LoadingSpinner from "../components/LoadingSpinner";
 import SaveCodeButton from "../components/SaveCodeButton";
+import FileExplorer from "../components/FileExplorer";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { v4 as uuidv4 } from 'uuid';
-import { FaUsers, FaCopy, FaCheck, FaComments, FaPaperPlane, FaSignInAlt } from "react-icons/fa";
+import { FaUsers, FaCopy, FaCheck, FaComments, FaPaperPlane, FaSignInAlt, FaShare, FaFolder } from "react-icons/fa";
 import { io } from 'socket.io-client';
+import { toast } from 'react-toastify';
+import fileService from "../services/fileService";
+import { defaultSnippets } from "../utils/defaultSnippets";
 
 // Debug mode flag - set to false to reduce console output
 const DEBUG_MODE = false;
@@ -86,6 +90,17 @@ const CodeEditor = () => {
   const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
   const [userCount, setUserCount] = useState(1);
   const [roomParticipants, setRoomParticipants] = useState([]);
+
+  // Share functionality
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareLink, setShareLink] = useState('');
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [showShareLinkCopied, setShowShareLinkCopied] = useState(false);
+
+  // File explorer state
+  const [showFileExplorer, setShowFileExplorer] = useState(false);
+  const [activeFile, setActiveFile] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const monaco = useMonaco();
 
@@ -385,9 +400,6 @@ const CodeEditor = () => {
       const newRoomId = uuidv4();
       setRoomId(newRoomId);
       
-      // Save the current session to collaboration history
-      await saveCollaborationSession(newRoomId);
-      
       // Navigate to the collaboration URL
       navigate(`/collaborate/${newRoomId}`);
     } else {
@@ -510,17 +522,216 @@ const CodeEditor = () => {
     setTimeout(() => setShowCopiedMessage(false), 2000);
   };
 
+  // Handle code changes
   const handleEditorChange = (value) => {
-    setCode(value);
+    setCode(value || "");
+    
+    // If we're editing a file, update its content in local state
+    if (activeFile && !isCollaborative) {
+      setActiveFile({
+        ...activeFile,
+        content: value || ""
+      });
+    }
+    
+    // Update localStorage
+    try {
+      localStorage.setItem(isCollaborative ? `code_${roomId}` : 'code', value || "");
+    } catch (err) {
+      console.error("Error saving to localStorage:", err);
+    }
+    
+    // In collaborative mode, emit change to other users
     if (isCollaborative && socket && socket.connected) {
       if (DEBUG_MODE) {
         console.log('Emitting code update to room:', roomId, 'with socket ID:', socket.id);
       }
       socket.emit('code-update', {
         roomId,
-        code: value,
+        code: value || "",
         userId: socket.id
       });
+    }
+  };
+
+  // Handle file selection from file explorer
+  const handleFileSelect = (file) => {
+    if (!file) {
+      setActiveFile(null);
+      return;
+    }
+    
+    setActiveFile(file);
+    setCode(file.content || '');
+    
+    // Determine language based on file extension
+    const extension = file.name.split('.').pop().toLowerCase();
+    const extensionToLanguage = {
+      'js': 'javascript',
+      'jsx': 'javascript',
+      'py': 'python',
+      'java': 'java',
+      'html': 'html',
+      'css': 'css',
+      'json': 'json',
+      'c': 'c',
+      'cpp': 'c++',
+      'cs': 'c#',
+      'php': 'php',
+      'go': 'go',
+      'rs': 'rust',
+      'rb': 'ruby'
+    };
+    
+    if (extensionToLanguage[extension]) {
+      setLanguage(extensionToLanguage[extension]);
+    }
+  };
+  
+  // Toggle file explorer visibility
+  const toggleFileExplorer = () => {
+    const newState = !showFileExplorer;
+    setShowFileExplorer(newState);
+    
+    // Save file manager state to localStorage
+    localStorage.setItem('fileManagerOpen', newState.toString());
+    
+    // Reset editor state when hiding file explorer
+    if (!newState) {
+      setActiveFile(null);
+      // Load the default snippet for current language
+      const savedLanguage = localStorage.getItem('language') || 'javascript';
+      setCode(defaultSnippets[savedLanguage] || '// Start coding here...');
+      // Clear active file ID from localStorage
+      localStorage.removeItem('activeFileId');
+    }
+  };
+
+  // Save active file
+  const saveActiveFile = async () => {
+    if (!activeFile) {
+      return;
+    }
+    
+    try {
+      setIsSaving(true);
+      await fileService.updateFile(activeFile._id, {
+        content: code
+      });
+      toast.success("File saved successfully");
+    } catch (err) {
+      console.error("Error saving file:", err);
+      toast.error("Failed to save file");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveSubmission = async () => {
+    if (!user) {
+      toast.error("Please login to save code");
+      return;
+    }
+
+    if (!code || !language) {
+      toast.error("Code and language are required");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      
+      if (isCollaborative && roomId) {
+        // Save as collaboration
+        const currentUser = user.username || user.email || 'Anonymous';
+        
+        // Create a list of participants including the current user and any provided roomParticipants
+        const participantsList = [...new Set([currentUser, ...roomParticipants])];
+        
+        const collaborationData = {
+          roomId,
+          code,
+          language,
+          documentName: `${language.charAt(0).toUpperCase() + language.slice(1)} Collaboration`,
+          editor: currentUser,
+          participants: participantsList,
+          timestamp: new Date().toISOString()
+        };
+        
+        try {
+          const response = await axios.post(
+            "http://localhost:5001/api/code/collaborations", 
+            collaborationData,
+            {
+              headers: { 
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+  
+          if (!response.data) {
+            throw new Error("Failed to save collaboration");
+          }
+  
+          console.log("Collaboration saved/updated successfully:", response.data);
+          toast.success("Collaboration saved successfully");
+        } catch (collabError) {
+          console.error("Error saving collaboration:", collabError);
+          
+          // If it's a 409 error (conflict/duplicate), we can treat it as a success
+          if (collabError.response?.status === 409) {
+            console.log("Collaboration already exists, treating as success");
+            toast.success("Collaboration updated successfully");
+            return;
+          }
+          
+          // For other errors, show an error message
+          const errorMessage = collabError.response?.data?.message || collabError.message || "Failed to save collaboration";
+          toast.error(errorMessage);
+        }
+      } else {
+        // Save as normal submission
+        const submissionData = {
+          code,
+          language,
+          input: input || '',
+          output: output || '',
+          status: output?.includes("Error") ? "error" : "completed"
+        };
+        
+        if (submissionId) {
+          await axios.put(
+            `http://localhost:5001/api/submissions/${submissionId}`, 
+            submissionData,
+            {
+              headers: { 
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          toast.success("Code updated successfully");
+        } else {
+          await axios.post(
+            "http://localhost:5001/api/submissions",
+            submissionData,
+            {
+              headers: { 
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          toast.success("Code saved successfully");
+        }
+      }
+    } catch (error) {
+      console.error('Error saving code:', error);
+      const errorMessage = error.response?.data?.message || error.message || `Failed to save ${isCollaborative ? 'collaboration' : 'code'}`;
+      toast.error(errorMessage);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -539,17 +750,173 @@ const CodeEditor = () => {
     }
   };
 
+  const handleShare = async () => {
+    if (!user) {
+      alert("Please login to share code");
+      return;
+    }
+
+    if (!code.trim()) {
+      alert("Cannot share empty code");
+      return;
+    }
+
+    try {
+      setIsGeneratingLink(true);
+      
+      // Generate a share ID
+      const shareId = uuidv4();
+      
+      // Create shared code data
+      const sharedCodeData = {
+        code,
+        language,
+        input: input || '',
+        output: output || '',
+        shareId
+      };
+      
+      // Send to server to save
+      const response = await axios.post(
+        "http://localhost:5001/api/share",
+        sharedCodeData,
+        {
+          headers: { 
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      // Create a shareable link
+      const link = `${window.location.origin}/share/${shareId}`;
+      setShareLink(link);
+      setShowShareModal(true);
+      
+    } catch (error) {
+      console.error('Error sharing code:', error);
+      alert("Failed to generate share link. Please try again.");
+    } finally {
+      setIsGeneratingLink(false);
+    }
+  };
+
+  const copyShareLink = () => {
+    navigator.clipboard.writeText(shareLink);
+    setShowShareLinkCopied(true);
+    setTimeout(() => setShowShareLinkCopied(false), 2000);
+  };
+
+  // Initialize code from location state or localStorage
+  useEffect(() => {
+    // Get the last known file manager state
+    const wasFileManagerOpen = localStorage.getItem('fileManagerOpen') === 'true';
+    setShowFileExplorer(wasFileManagerOpen);
+
+    if (location.state) {
+      if (location.state.fileId) {
+        // Load file content
+        const loadFile = async () => {
+          try {
+            const response = await axios.get(`http://localhost:5001/api/files/${location.state.fileId}`, {
+              headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+            });
+            
+            const file = response.data;
+            
+            // Only set file content and show file manager if it was previously open
+            if (wasFileManagerOpen) {
+              setCode(file.content);
+              setActiveFile(file);
+              setShowFileExplorer(true);
+              
+              // Set language based on file extension
+              const extension = file.name.split('.').pop().toLowerCase();
+              const extensionMap = {
+                'js': 'javascript',
+                'ts': 'typescript',
+                'py': 'python',
+                'java': 'java',
+                'c': 'c',
+                'cpp': 'c++',
+                'cs': 'c#',
+                'php': 'php',
+                'go': 'go',
+                'rs': 'rust',
+                'rb': 'ruby'
+              };
+              
+              setLanguage(extensionMap[extension] || 'javascript');
+            } else {
+              // If file manager was closed, use default snippet
+              const savedLanguage = localStorage.getItem('language') || 'javascript';
+              setLanguage(savedLanguage);
+              setCode(defaultSnippets[savedLanguage] || '// Start coding here...');
+              setActiveFile(null);
+            }
+          } catch (error) {
+            console.error('Error loading file:', error);
+            // On error, set default code
+            const savedLanguage = localStorage.getItem('language') || 'javascript';
+            setLanguage(savedLanguage);
+            setCode(defaultSnippets[savedLanguage] || '// Start coding here...');
+            setActiveFile(null);
+          }
+        };
+        
+        loadFile();
+      } else if (location.state.submissionData) {
+        setCode(location.state.submissionData.code);
+        setLanguage(location.state.submissionData.language);
+        setInput(location.state.submissionData.input);
+        setOutput(location.state.submissionData.output);
+        setSubmissionId(location.state.submissionId);
+      }
+    } else {
+      // On fresh load/refresh with no state
+      const savedLanguage = localStorage.getItem('language') || 'javascript';
+      setLanguage(savedLanguage);
+      
+      // If file manager is closed or no active file, use default snippet
+      if (!wasFileManagerOpen || !localStorage.getItem('activeFileId')) {
+        setCode(defaultSnippets[savedLanguage] || '// Start coding here...');
+        setActiveFile(null);
+      }
+    }
+  }, [location.state]);
+
+  // Update the language selection handler
+  const handleLanguageChange = (e) => {
+    const newLanguage = e.target.value;
+    setLanguage(newLanguage);
+    
+    // Load default snippet for the selected language
+    setCode(defaultSnippets[newLanguage] || '');
+    
+    // Save to localStorage
+    localStorage.setItem("selectedLanguage", newLanguage);
+  };
+
   return (
     <div className="min-h-screen bg-[#88BDBC] p-3 flex flex-col items-center font-['Poppins']">
       {/* Language & Theme Selectors */}
       <div className="w-[65%] macbook-width flex justify-between mb-3">
         <div className="flex gap-2">
+          <button
+            className="px-3 py-1.5 bg-[#254E58] text-white font-semibold rounded-md 
+                shadow-md hover:bg-[#112D32] transition-colors flex items-center gap-2 text-sm file-manager-btn"
+            onClick={toggleFileExplorer}
+          >
+            <FaFolder />
+            {showFileExplorer ? 'Hide File Manager' : 'Show File Manager'}
+          </button>
+
           <select
             className="w-44 px-2 py-1.5 bg-[#254E58] text-white font-semibold rounded-md 
                shadow-md focus:outline-none focus:ring-1 focus:ring-[#88BDBC] 
                transition cursor-pointer hover:bg-[#112D32] text-sm"
             value={language}
-            onChange={(e) => setLanguage(e.target.value)}
+            onChange={handleLanguageChange}
           >
             <option value="javascript">JavaScript</option>
             <option value="typescript">TypeScript</option>
@@ -582,6 +949,26 @@ const CodeEditor = () => {
             <option value="solarized-dark">Solarized Dark</option>
             <option value="solarized-light">Solarized Light</option>
           </select>
+          
+          {!isCollaborative && (
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-1.5 px-2 py-1.5 bg-white text-[#254E58] rounded-md hover:bg-[#254E58] hover:text-white transition-colors text-sm"
+              disabled={isGeneratingLink}
+            >
+              {isGeneratingLink ? (
+                <span className="flex items-center justify-center gap-2">
+                  <LoadingSpinner size="small" />
+                  Generating...
+                </span>
+              ) : (
+                <>
+                  <FaShare />
+                  Share
+                </>
+              )}
+            </button>
+          )}
         </div>
 
         {isCollaborative ? (
@@ -667,116 +1054,144 @@ const CodeEditor = () => {
         )}
       </div>
 
-      {/* Main Container - Editor (Left) | Input & Output (Right) */}
-      <div className="w-[65%] macbook-width grid grid-cols-1 lg:grid-cols-10 gap-3">
-        {/* Code Editor - Left Side */}
-        <div className="lg:col-span-7 border border-[#88BDBC] rounded-lg overflow-hidden shadow-md flex flex-col">
-          {isCollaborative && (
-            <div className="flex items-center px-2 py-1 bg-[#254E58] text-white text-xs border-b border-[#88BDBC]/30">
-              <div className="flex items-center gap-2">
-                <FaUsers className="text-xs" />
-                <span>
-                  {userCount} users online
-                </span>
-              </div>
-            </div>
+      {/* Main Container with File Explorer */}
+      <div className={`w-[65%] macbook-width flex ${showFileExplorer ? 'gap-3' : 'gap-0'}`}>
+        {/* File Explorer - Left Side */}
+        <div className={`transition-all duration-300 ${showFileExplorer ? 'w-72' : 'w-0'} overflow-hidden h-[78vh]`}>
+          {showFileExplorer && (
+            <FileExplorer 
+              onFileSelect={handleFileSelect}
+              activeFileId={activeFile?._id}
+              isVisible={showFileExplorer}
+              onToggleVisibility={toggleFileExplorer}
+            />
           )}
-          
-          <Editor
-            height={isCollaborative ? "75vh" : "78vh"}
-            language={language}
-            value={code}
-            onChange={handleEditorChange}
-            theme={theme}
-            options={{
-              minimap: { enabled: false },
-              fontSize: 13,
-              fontFamily: "'Fira Code', monospace",
-              lineNumbers: "on",
-              scrollBeyondLastLine: false,
-              automaticLayout: true,
-              padding: { top: 6, bottom: 6 },
-            }}
-          />
         </div>
 
-        {/* Right Side - Output on Top, Input Below */}
-        <div className="lg:col-span-3 flex flex-col h-[78vh] gap-3">
-          {/* Output Box */}
-          <div className="h-[48%] border border-[#254E58]/30 rounded-lg bg-[#254E58] 
-                       text-white overflow-auto shadow-md">
-            <div className="px-2 py-1.5 border-b border-[#88BDBC]/30 text-sm">
-              📝 Output
-            </div>
-            <div className="p-2">
-              {loading ? (
-                <LoadingSpinner />
-              ) : (
-                <pre className="whitespace-pre-wrap text-xs font-['Fira Code']">
-                  {output || "Output will appear here..."}
-                </pre>
-              )}
-            </div>
-          </div>
-
-          {/* Input Box */}
-          <div className="h-[38%] border border-[#254E58]/30 rounded-lg bg-[#112D32] 
-                       text-white shadow-md overflow-hidden">
-            <div className="px-2 py-1.5 border-b border-[#88BDBC]/30 text-sm">
-              🔹 Custom Input (Optional)
-            </div>
-            <textarea
-              className="w-full h-[calc(100%-32px)] p-2 bg-transparent text-white 
-                      placeholder-[#88BDBC]/70 focus:outline-none resize-none 
-                      text-xs font-['Fira Code']"
-              value={input}
-              onChange={(e) => {
-                const newInput = e.target.value;
-                setInput(newInput);
-                if (isCollaborative && socket && socket.connected) {
-                  if (DEBUG_MODE) {
-                    console.log('Emitting input update to room:', roomId);
-                  }
-                  socket.emit('input-update', {
-                    roomId,
-                    input: newInput,
-                    userId: socket.id
-                  });
-                }
+        {/* Code Editor and IO - Right Side */}
+        <div className={`${showFileExplorer ? 'flex-1' : 'w-full'} flex h-[78vh]`}>
+          {/* Code Editor - Left Side */}
+          <div className="flex-1 mr-3 overflow-hidden shadow-md flex flex-col h-full bg-[#1E1E1E] rounded-lg">
+            {isCollaborative && (
+              <div className="flex items-center px-2 py-1 bg-[#254E58] text-white text-xs border-b border-[#88BDBC]/30">
+                <div className="flex items-center gap-2">
+                  <FaUsers className="text-xs" />
+                  <span>
+                    {userCount} users online
+                  </span>
+                </div>
+              </div>
+            )}
+            
+            {activeFile && (
+              <div className="px-2 py-1 bg-[#F5F5F5] text-[#254E58] text-xs border-b border-[#254E58]/10">
+                <span className="font-medium">{activeFile.name}</span>
+              </div>
+            )}
+            
+            <Editor
+              className="flex-1 h-full"
+              height="100%"
+              language={language}
+              value={code}
+              onChange={handleEditorChange}
+              theme={theme}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 13,
+                fontFamily: "'Fira Code', monospace",
+                lineNumbers: "on",
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                padding: { top: 0, bottom: 0 },
               }}
-              placeholder="Enter your input here..."
             />
           </div>
 
-          {/* Buttons */}
-          <div className="flex flex-col gap-2">
-            <button
-              className="w-full py-2 bg-[#254E58] text-white font-semibold rounded-lg 
-                      shadow-md hover:bg-[#112D32] transition-colors disabled:opacity-50 
-                      disabled:cursor-not-allowed text-sm"
-              onClick={handleSubmit}
-              disabled={loading}
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <LoadingSpinner size="small" />
-                  Executing...
-                </span>
-              ) : (
-                "Run Code"
-              )}
-            </button>
+          {/* Right Side - Output on Top, Input Below */}
+          <div className="w-1/3 flex flex-col h-full gap-3">
+            {/* Output Box */}
+            <div className="h-[48%] border border-[#254E58]/30 rounded-lg bg-[#254E58] 
+                         text-white overflow-auto shadow-md">
+              <div className="px-2 py-1.5 border-b border-[#88BDBC]/30 text-sm">
+                📝 Output
+              </div>
+              <div className="p-2">
+                {loading ? (
+                  <LoadingSpinner />
+                ) : (
+                  <pre className="whitespace-pre-wrap text-xs font-['Fira Code']">
+                    {output || "Output will appear here..."}
+                  </pre>
+                )}
+              </div>
+            </div>
 
-            <SaveCodeButton 
-              code={code} 
-              language={language} 
-              input={input} 
-              output={output}
-              submissionId={submissionId}
-              isCollaborative={isCollaborative}
-              roomId={roomId}
-              roomParticipants={roomParticipants}
-            />
+            {/* Input Box */}
+            <div className="h-[38%] border border-[#254E58]/30 rounded-lg bg-[#112D32] 
+                         text-white shadow-md overflow-hidden">
+              <div className="px-2 py-1.5 border-b border-[#88BDBC]/30 text-sm">
+                🔹 Custom Input (Optional)
+              </div>
+              <textarea
+                className="w-full h-[calc(100%-32px)] p-2 bg-transparent text-white 
+                        placeholder-[#88BDBC]/70 focus:outline-none resize-none 
+                        text-xs font-['Fira Code']"
+                value={input}
+                onChange={(e) => {
+                  const newInput = e.target.value;
+                  setInput(newInput);
+                  if (isCollaborative && socket && socket.connected) {
+                    if (DEBUG_MODE) {
+                      console.log('Emitting input update to room:', roomId);
+                    }
+                    socket.emit('input-update', {
+                      roomId,
+                      input: newInput,
+                      userId: socket.id
+                    });
+                  }
+                }}
+                placeholder="Enter your input here..."
+              />
+            </div>
+
+            {/* Buttons */}
+            <div className="flex flex-col gap-2">
+              <button
+                className="w-full py-2 bg-[#254E58] text-white font-semibold rounded-lg 
+                        shadow-md hover:bg-[#112D32] transition-colors disabled:opacity-50 
+                        disabled:cursor-not-allowed text-sm"
+                onClick={handleSubmit}
+                disabled={loading}
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <LoadingSpinner size="small" />
+                    Executing...
+                  </span>
+                ) : (
+                  "Run Code"
+                )}
+              </button>
+
+              <button
+                className="w-full py-2 bg-[#254E58] text-white font-semibold rounded-lg 
+                        shadow-md hover:bg-[#112D32] transition-colors disabled:opacity-50 
+                        disabled:cursor-not-allowed text-sm"
+                onClick={activeFile ? saveActiveFile : handleSaveSubmission}
+                disabled={isSaving || !code.trim() || !user || (isCollaborative && !hasJoinedRoom)}
+              >
+                {isSaving ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <LoadingSpinner size="small" />
+                    Saving...
+                  </span>
+                ) : (
+                  `Save ${activeFile ? 'File' : isCollaborative ? 'Collaboration' : 'Code'}`
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -826,11 +1241,56 @@ const CodeEditor = () => {
               />
               <button
                 type="submit"
-                className="p-1 bg-[#88BDBC] text-white rounded hover:bg-[#254E58] transition-colors"
+                className="p-1 bg-[#88BDBC] text-white rounded-md hover:bg-[#254E58] transition-colors"
               >
                 <FaPaperPlane className="text-xs" />
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-[90%] max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-[#254E58]">Share Your Code</h3>
+              <button 
+                onClick={() => setShowShareModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <p className="text-sm text-gray-600 mb-4">
+              Anyone with this link can view your code. The link will expire in 30 days.
+            </p>
+            
+            <div className="flex items-center">
+              <input
+                type="text"
+                value={shareLink}
+                readOnly
+                className="flex-1 p-2 border border-[#88BDBC] rounded-md text-sm"
+              />
+              <button
+                onClick={copyShareLink}
+                className="ml-2 px-3 py-2 bg-[#254E58] text-white rounded-md hover:bg-[#112D32] transition-colors"
+              >
+                {showShareLinkCopied ? <FaCheck /> : <FaCopy />}
+              </button>
+            </div>
+            
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="px-4 py-2 bg-[#254E58] text-white rounded-md hover:bg-[#112D32] transition-colors"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

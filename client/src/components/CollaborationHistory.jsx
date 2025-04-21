@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaUsers, FaUserEdit, FaCalendarAlt, FaFileCode, FaChevronRight, FaExclamationTriangle, FaClock } from "react-icons/fa";
+import { FaUsers, FaUserEdit, FaCalendarAlt, FaFileCode, FaChevronRight, FaExclamationTriangle, FaClock, FaEye, FaTrash } from "react-icons/fa";
 import LoadingSpinner from "./LoadingSpinner";
 
 const CollaborationHistory = ({ history = [], onDelete }) => {
@@ -166,23 +166,22 @@ const CollaborationHistory = ({ history = [], onDelete }) => {
                             <div className="flex gap-2 mt-2">
                               <button
                                 onClick={() => handleView(entry.roomId)}
-                                className="px-3 py-1 text-white bg-[#88BDBC] rounded-md transition-colors border border-[#88BDBC]/70 font-medium text-sm hover:bg-[#254E58] flex items-center gap-1"
+                                className="p-2 text-[#88BDBC] hover:text-[#254E58] transition-colors rounded-full hover:bg-[#88BDBC]/10"
+                                title="View Collaboration"
                                 disabled={loading && deletingId === entry._id}
                               >
-                                View <FaChevronRight className="text-xs" />
+                                <FaEye className="w-4 h-4" />
                               </button>
                               <button
                                 onClick={() => handleDelete(entry._id)}
-                                className="px-3 py-1 text-white bg-red-500 rounded-md transition-colors border border-red-400 font-medium text-sm hover:bg-red-600 flex items-center gap-1"
+                                className="p-2 text-red-500 hover:text-red-700 transition-colors rounded-full hover:bg-red-100"
+                                title="Delete Collaboration"
                                 disabled={loading && deletingId === entry._id}
                               >
                                 {loading && deletingId === entry._id ? (
-                                  <span className="flex items-center gap-1">
-                                    <LoadingSpinner size="small" />
-                                    Deleting...
-                                  </span>
+                                  <LoadingSpinner size="small" />
                                 ) : (
-                                  "Delete"
+                                  <FaTrash className="w-4 h-4" />
                                 )}
                               </button>
                             </div>

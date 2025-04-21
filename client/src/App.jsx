@@ -8,6 +8,9 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import LanguageAdmin from './pages/LanguageAdmin';
 import SubmissionDetail from './pages/SubmissionDetail';
+import SharedCodeView from './pages/SharedCodeView';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -83,8 +86,21 @@ function App() {
                 <CodeEditor />
               </ProtectedRoute>
             } />
+            {/* Public route for shared code */}
+            <Route path="/share/:shareId" element={<SharedCodeView />} />
           </Routes>
         </main>
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
       </div>
     </Router>
   );

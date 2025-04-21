@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import LoadingSpinner from "./LoadingSpinner";
-import { FaCode, FaCalendarAlt, FaChevronRight, FaExclamationTriangle } from "react-icons/fa";
+import { FaCode, FaCalendarAlt, FaChevronRight, FaExclamationTriangle, FaTrash, FaEye, FaChevronDown } from "react-icons/fa";
 
 // Language colors mapping
 const languageConfig = {
@@ -65,31 +65,37 @@ const RecentSubmissions = () => {
   const [selectedLanguage, setSelectedLanguage] = useState("");
 
   // Get code snippet with improved formatting
-  const getCodeSnippet = (code) => {
-    if (!code) return '';
-    
-    // Remove extra whitespace and newlines
-    const cleanedCode = code.trim();
-    
-    // Get first line of code (up to first newline or 40 chars)
-    let firstLine = '';
-    const newlineIndex = cleanedCode.indexOf('\n');
-    
-    if (newlineIndex > -1) {
-      // If there's a newline, get content up to that
-      firstLine = cleanedCode.substring(0, newlineIndex);
-      
-      // If first line is too long, truncate it
-      if (firstLine.length > 40) {
-        firstLine = firstLine.substring(0, 40) + '...';
-      }
-      
-      // Show that there are more lines
-      return `${firstLine} // +${cleanedCode.split('\n').length - 1} more lines`;
-    } else {
-      // No newlines, just truncate if needed
-      return cleanedCode.length > 60 ? `${cleanedCode.substring(0, 60)}...` : cleanedCode;
+  const getSubmissionContent = (submission) => {
+    // Check if it's a file submission by checking for fileName
+    if (submission.fileName) {
+      return {
+        title: submission.fileName,
+        content: `File: ${submission.fileName}`,
+        isFile: true
+      };
     }
+
+    // For manual code submissions
+    const code = submission.code || '';
+    const cleanedCode = code.trim();
+    let displayContent = '';
+
+    if (cleanedCode) {
+      const lines = cleanedCode.split('\n');
+      const firstLine = lines[0];
+      
+      if (lines.length > 1) {
+        displayContent = `${firstLine.substring(0, 40)}${firstLine.length > 40 ? '...' : ''} // +${lines.length - 1} more lines`;
+      } else {
+        displayContent = firstLine.length > 60 ? `${firstLine.substring(0, 60)}...` : firstLine;
+      }
+    }
+
+    return {
+      title: languageConfig[submission.language]?.name || submission.language,
+      content: displayContent || 'Empty code submission',
+      isFile: false
+    };
   };
 
   // Format date
@@ -119,15 +125,42 @@ const RecentSubmissions = () => {
       
       try {
         setLoading(true);
-        const response = await axios.get("http://localhost:5001/api/submissions", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-        });
+        // Fetch both code submissions and file submissions
+        const [codeResponse, fileResponse] = await Promise.all([
+          axios.get("http://localhost:5001/api/submissions", {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          }),
+          axios.get("http://localhost:5001/api/files", {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          })
+        ]);
         
-        setSubmissions(response.data.submissions || []);
+        // Get code submissions - handle both array and object response formats
+        const codeSubmissions = Array.isArray(codeResponse.data) 
+          ? codeResponse.data 
+          : codeResponse.data.submissions || [];
+
+        // Get file submissions - filter only files (not folders) and format them
+        const fileSubmissions = (Array.isArray(fileResponse.data) ? fileResponse.data : [])
+          .filter(file => file.type === 'file')
+          .map(file => ({
+            _id: file._id,
+            code: file.content || '',
+            language: getLanguageFromFileName(file.name),
+            fileName: file.name,
+            status: 'completed',
+            createdAt: file.createdAt || new Date().toISOString()
+          }));
+        
+        // Combine and sort by date
+        const allSubmissions = [...codeSubmissions, ...fileSubmissions]
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        
+        setSubmissions(allSubmissions);
         setError(null);
       } catch (err) {
         console.error("Failed to fetch submissions:", err);
-        setError("Failed to load code submissions");
+        setError("Failed to load submissions. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -136,40 +169,80 @@ const RecentSubmissions = () => {
     fetchSubmissions();
   }, [user]);
 
+  // Helper function to determine language from file name
+  const getLanguageFromFileName = (fileName) => {
+    const extension = fileName.split('.').pop().toLowerCase();
+    const extensionMap = {
+      'js': 'javascript',
+      'jsx': 'javascript',
+      'py': 'python',
+      'java': 'java',
+      'c': 'c',
+      'cpp': 'c++',
+      'cs': 'c#',
+      'php': 'php',
+      'go': 'go',
+      'rs': 'rust',
+      'rb': 'ruby'
+    };
+    return extensionMap[extension] || 'javascript';
+  };
+
   // Filter submissions by language if selected
   const filteredSubmissions = selectedLanguage 
     ? submissions.filter(submission => submission.language === selectedLanguage)
     : submissions;
 
+  const handleViewSubmission = (submission) => {
+    if (submission.fileName) {
+      // If it's a file submission
+      navigate('/editor', {
+        state: {
+          fileId: submission._id,
+          fileName: submission.fileName,
+          code: submission.code,
+          language: submission.language,
+          isFile: true
+        }
+      });
+    } else {
+      // If it's a code submission
+      navigate('/editor', {
+        state: {
+          code: submission.code,
+          language: submission.language,
+          input: submission.input || '',
+          output: submission.output || '',
+          submissionId: submission._id,
+          isFile: false
+        }
+      });
+    }
+  };
+
   // Delete submission
-  const handleDelete = async (id) => {
+  const handleDelete = async (submission) => {
     if (window.confirm("Are you sure you want to delete this submission?")) {
       try {
-        await axios.delete(`http://localhost:5001/api/submissions/${id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-        });
+        if (submission.fileName) {
+          // Delete file
+          await axios.delete(`http://localhost:5001/api/files/${submission._id}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          });
+        } else {
+          // Delete code submission
+          await axios.delete(`http://localhost:5001/api/submissions/${submission._id}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          });
+        }
         
         // Update submissions list
-        setSubmissions(submissions.filter(sub => sub._id !== id));
+        setSubmissions(submissions.filter(sub => sub._id !== submission._id));
       } catch (err) {
         console.error("Failed to delete submission:", err);
         alert("Failed to delete submission");
       }
     }
-  };
-
-  const handleViewSubmission = (submission) => {
-    navigate('/editor', {
-      state: {
-        submissionData: {
-          code: submission.code,
-          language: submission.language,
-          input: submission.input || "",
-          output: submission.output || ""
-        },
-        submissionId: submission._id
-      }
-    });
   };
 
   if (loading) {
@@ -219,104 +292,95 @@ const RecentSubmissions = () => {
                 <FaCalendarAlt className="text-[#88BDBC]" />
                 <span className="text-[#254E58] font-medium font-['Montserrat']">Timeline View</span>
               </div>
-              <select
-                className="px-3 py-1 rounded-md border border-[#88BDBC]/30 bg-white text-[#112D32] text-sm focus:outline-none focus:ring-2 focus:ring-[#88BDBC]/60 font-['Montserrat'] w-36"
-                value={selectedLanguage}
-                onChange={(e) => {
-                  setSelectedLanguage(e.target.value);
-                }}
-              >
-                <option value="">All Languages</option>
-                {Object.entries(languageConfig).map(([key, { name }]) => (
-                  <option key={key} value={key}>
-                    {name}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  className="pl-3 pr-8 py-1 rounded-md border border-[#88BDBC]/30 bg-white text-[#112D32] text-sm focus:outline-none focus:ring-2 focus:ring-[#88BDBC]/60 font-['Montserrat'] w-36 appearance-none cursor-pointer"
+                  value={selectedLanguage}
+                  onChange={(e) => {
+                    setSelectedLanguage(e.target.value);
+                  }}
+                >
+                  <option value="">All Languages</option>
+                  {Object.entries(languageConfig).map(([key, { name }]) => (
+                    <option key={key} value={key}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2">
+                  <FaChevronDown className="text-[#88BDBC] text-xs" />
+                </div>
+              </div>
             </div>
 
             <div className="bg-white rounded-b-lg p-4">
-              {/* Timeline View with Scrollable Container - Using CSS for continuous line */}
               <div className="relative h-[330px] timeline-scroll-container">
                 <div className="h-full overflow-y-auto pr-2 custom-scrollbar">
-                  {filteredSubmissions.map((submission, index) => (
-                    <div key={submission._id} className="mb-6 timeline-item">
-                      {/* Individual Date header */}
-                      <div className="flex items-center mb-3 relative z-10">
-                        <div className="w-6 h-6 rounded-full bg-[#88BDBC] flex items-center justify-center">
-                          <div className="w-3 h-3 bg-white rounded-full"></div>
+                  {filteredSubmissions.map((submission) => {
+                    const submissionData = getSubmissionContent(submission);
+                    
+                    return (
+                      <div key={submission._id} className="mb-6 timeline-item">
+                        <div className="flex items-center mb-3 relative z-10">
+                          <div className="w-6 h-6 rounded-full bg-[#88BDBC] flex items-center justify-center">
+                            <div className="w-3 h-3 bg-white rounded-full"></div>
+                          </div>
+                          <div className="ml-4 bg-[#F5F5F5] px-3 py-1 rounded-md text-[#254E58] font-medium font-['Montserrat']">
+                            {formatDate(submission.createdAt)}
+                          </div>
                         </div>
-                        <div className="ml-4 bg-[#F5F5F5] px-3 py-1 rounded-md text-[#254E58] font-medium font-['Montserrat']">
-                          {formatDate(submission.createdAt)}
-                        </div>
-                      </div>
-                      
-                      {/* Individual Submission */}
-                      <div className="ml-10 space-y-3">
-                        <div 
-                          className="bg-white border border-[#88BDBC]/20 rounded-lg p-4 hover:shadow-md transition-all duration-200 relative"
-                        >
-                          <div className="absolute -left-8 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-[#88BDBC]/50 rounded-full"></div>
-                          
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <div
-                                  className="w-3 h-3 rounded-full"
-                                  style={{
-                                    backgroundColor: languageConfig[submission.language]?.color || '#ccc'
-                                  }}
-                                ></div>
-                                <span className="font-['Montserrat'] text-[#254E58] font-medium">
-                                  {languageConfig[submission.language]?.name || submission.language}
-                                </span>
+
+                        <div className="ml-10 bg-white border border-[#88BDBC]/30 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-300">
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-[#88BDBC]/20 flex items-center justify-center">
+                                <FaCode className="text-[#88BDBC]" />
                               </div>
-                              
-                              <div className="bg-[#F5F5F5] p-3 rounded-md mb-2">
-                                <code className="text-xs text-[#112D32] font-mono whitespace-pre-wrap">
-                                  {getCodeSnippet(submission.code)}
-                                </code>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h3 className="text-[#254E58] font-medium">
+                                    {languageConfig[submission.language]?.name || submission.language}
+                                  </h3>
+                                  {getStatusBadge(submission.status)}
+                                </div>
                               </div>
                             </div>
-                            
-                            <div className="flex flex-col sm:items-end gap-2">
-                              {getStatusBadge(submission.status)}
-                              
-                              <div className="flex gap-2 mt-2">
-                                <button
-                                  onClick={() => handleViewSubmission(submission)}
-                                  className="px-3 py-1 text-white bg-[#88BDBC] rounded-md transition-colors border border-[#88BDBC]/70 font-medium text-sm hover:bg-[#254E58] flex items-center gap-1"
-                                >
-                                  View <FaChevronRight className="text-xs" />
-                                </button>
-                                <button
-                                  onClick={() => handleDelete(submission._id)}
-                                  className="px-3 py-1 text-white bg-red-500 rounded-md transition-colors border border-red-400 font-medium text-sm hover:bg-red-600"
-                                >
-                                  Delete
-                                </button>
-                              </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleViewSubmission(submission)}
+                                className="p-2 text-[#88BDBC] hover:text-[#254E58] transition-colors rounded-full hover:bg-[#88BDBC]/10"
+                                title="View Submission"
+                              >
+                                <FaEye className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(submission)}
+                                className="p-2 text-red-500 hover:text-red-700 transition-colors rounded-full hover:bg-red-100"
+                                title="Delete Submission"
+                              >
+                                <FaTrash className="w-4 h-4" />
+                              </button>
                             </div>
+                          </div>
+                          <div className="bg-[#F5F5F5] p-3 rounded-md font-mono text-sm text-[#254E58]">
+                            {submissionData.content}
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center py-8 px-4 text-center bg-white rounded-lg border border-[#88BDBC]/20">
-            <FaCode className="w-12 h-12 text-[#88BDBC] mb-3" />
-            <h3 className="text-lg font-medium text-[#254E58] mb-1 font-['Righteous']">No submissions found</h3>
-            <p className="text-[#112D32] mb-3 font-['Montserrat']">Try saving some code from the editor first!</p>
-            <Link 
-              to="/"
-              className="px-4 py-2 bg-[#88BDBC] text-white rounded-md hover:bg-[#254E58] transition-colors font-medium"
-            >
-              Go to Code Editor
-            </Link>
+          <div className="bg-white rounded-lg p-8 text-center">
+            <div className="text-[#254E58] text-lg font-medium mb-2">
+              No submissions yet
+            </div>
+            <div className="text-[#254E58]/70">
+              Start coding to see your submissions here
+            </div>
           </div>
         )}
       </div>
