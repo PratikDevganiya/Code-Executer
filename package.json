@@ -4,7 +4,7 @@
   "description": "Code execution and collaboration platform",
   "main": "server/server.js",
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   },
   "scripts": {
     "install:all": "npm install && cd client && npm install && cd ../server && npm install",
