@@ -124,24 +124,18 @@ const getFileById = asyncHandler(async (req, res) => {
 // @access  Private
 const createFile = asyncHandler(async (req, res) => {
   try {
-    console.log('Create file request body:', req.body);
-    
     // Extract data from request and ensure values are set
     const { name, type } = req.body;
     const parentId = req.body.parentId || null;
     const content = req.body.content || '';
     const userId = req.user._id;
     
-    console.log('User information:', userId);
-    
     // Validate input
     if (!name || !type) {
-      console.log('Validation failed: Missing name or type');
       return res.status(400).json({ message: 'Name and type are required' });
     }
     
     if (type !== 'file' && type !== 'folder') {
-      console.log('Validation failed: Invalid type', type);
       return res.status(400).json({ message: 'Type must be either "file" or "folder"' });
     }
     
@@ -150,7 +144,6 @@ const createFile = asyncHandler(async (req, res) => {
     if (parentId) {
       // Validate ObjectId
       if (!mongoose.Types.ObjectId.isValid(parentId)) {
-        console.log('Validation failed: Invalid parent directory ID', parentId);
         return res.status(400).json({ message: 'Invalid parent directory ID' });
       }
       
@@ -162,7 +155,6 @@ const createFile = asyncHandler(async (req, res) => {
       });
       
       if (!parentFolder) {
-        console.log('Parent folder not found:', parentId);
         return res.status(404).json({ message: 'Parent folder not found' });
       }
       
@@ -180,7 +172,6 @@ const createFile = asyncHandler(async (req, res) => {
     });
     
     if (existingFile) {
-      console.log('File/folder with same name already exists:', name);
       return res.status(400).json({ 
         message: `A ${existingFile.type} with this name already exists in this location` 
       });
@@ -199,11 +190,6 @@ const createFile = asyncHandler(async (req, res) => {
     if (type === 'file') {
       fileData.content = content;
     }
-    
-    console.log('Creating new file/folder with:', {
-      ...fileData,
-      content: type === 'file' ? 'content provided' : undefined
-    });
     
     // Create the file directly with the fileData
     const newFile = await File.create(fileData);
@@ -237,10 +223,8 @@ const createFile = asyncHandler(async (req, res) => {
       });
     }
     
-    console.log('File created successfully:', newFile._id);
     res.status(201).json(newFile);
   } catch (error) {
-    console.error('Error creating file (detailed):', error);
     res.status(500).json({ message: 'Failed to create file', error: error.message });
   }
 });
