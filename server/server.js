@@ -224,9 +224,17 @@ app.use((req, res, next) => {
   next();
 });
 
-// ✅ Test Route
+// ✅ Test Route - Simple HTML or API response
 app.get("/", (req, res) => {
-  res.send("🚀 Server is running...");
+  const indexPath = path.join(__dirname, 'public', 'index.html');
+  
+  if (fs.existsSync(indexPath)) {
+    console.log("Serving index.html from", indexPath);
+    res.sendFile(indexPath);
+  } else {
+    console.log("index.html not found at", indexPath);
+    res.send("🚀 Server is running...");
+  }
 });
 
 // Debug route to check file paths
@@ -280,19 +288,10 @@ const codeSubmissionRoutes = require('./routes/codeSubmissionRoutes');
 const shareRoutes = require('./routes/shareRoutes');
 const fileRoutes = require('./routes/fileRoutes');
 
-// ✅ Serve static files from the public directory with improved options
-console.log("Setting up static file serving from:", path.join(__dirname, 'public'));
-app.use(express.static(path.join(__dirname, 'public'), {
-  dotfiles: 'ignore',
-  etag: true,
-  extensions: ['html', 'htm'],
-  index: ['index.html'],
-  maxAge: '1d',
-  redirect: false,
-  setHeaders: function (res, path, stat) {
-    res.set('x-timestamp', Date.now());
-  }
-}));
+// ✅ Serve static files from the public directory
+const publicPath = path.join(__dirname, 'public');
+console.log("Setting up static file serving from:", publicPath);
+app.use(express.static(publicPath));
 
 // Routes
 app.use('/api/users', userRoutes); // This includes auth routes (login/register)
@@ -328,66 +327,14 @@ app.get('*', (req, res) => {
     return res.status(404).json({ message: 'API endpoint not found' });
   }
   
-  // Log request information
-  console.log('Received request for:', req.url);
-  console.log('Current directory:', __dirname);
-  console.log('Public path:', path.join(__dirname, 'public'));
-  
-  try {
-    // Try to send test.html first as a test
-    const testPath = path.join(__dirname, 'public', 'test.html');
-    if (fs.existsSync(testPath)) {
-      console.log('Serving test.html for debugging');
-      return res.sendFile(testPath);
-    }
-    
-    // Then try the index.html
-    const indexPath = path.join(__dirname, 'public', 'index.html');
-    if (fs.existsSync(indexPath)) {
-      console.log('Index.html exists, serving it');
-      return res.sendFile(indexPath);
-    }
-    
-    // If no index.html, create a dynamic one
-    console.error('Index.html not found, sending dynamic response');
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>CodeBoost - Static Files Missing</title>
-          <style>
-            body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-            .error { color: red; background: #ffeeee; padding: 10px; border-radius: 5px; }
-            pre { background: #f5f5f5; padding: 10px; overflow: auto; }
-          </style>
-        </head>
-        <body>
-          <h1>CodeBoost</h1>
-          <div class="error">
-            <h2>Static Files Missing</h2>
-            <p>The application's static files couldn't be found. This usually indicates a build process issue.</p>
-          </div>
-          <h3>Debugging Information:</h3>
-          <pre>
-            URL: ${req.url}
-            Public Directory: ${path.join(__dirname, 'public')}
-            Public Directory Exists: ${fs.existsSync(path.join(__dirname, 'public'))}
-            Index Path: ${path.join(__dirname, 'public', 'index.html')}
-            Index Exists: ${fs.existsSync(path.join(__dirname, 'public', 'index.html'))}
-            Contents of Public: ${
-              fs.existsSync(path.join(__dirname, 'public')) 
-                ? fs.readdirSync(path.join(__dirname, 'public')).join(', ') 
-                : 'Directory does not exist'
-            }
-          </pre>
-          <p>Check the <a href="/debug-paths">/debug-paths</a> endpoint for more information.</p>
-        </body>
-      </html>
-    `);
-  } catch (error) {
-    console.error('Error serving static content:', error);
-    res.status(500).send('Server error: ' + error.message);
+  // For client routes, serve the index.html
+  const indexPath = path.join(__dirname, 'public', 'index.html');
+  if (fs.existsSync(indexPath)) {
+    return res.sendFile(indexPath);
   }
+  
+  // If index.html doesn't exist, return 404
+  res.status(404).send('Not Found');
 });
 
 // ✅ Error Handler
