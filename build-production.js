@@ -48,6 +48,14 @@ const copyDir = (src, dest) => {
 // Step 0: Fix URLs in client code
 console.log('\n\n📦 Step 0: Fixing hardcoded URLs in client code...');
 try {
+  // Force production environment variables
+  console.log('Ensuring production environment variables are applied...');
+  // Copy .env.production to .env for the build
+  fs.copyFileSync(path.join(__dirname, 'client', '.env.production'), 
+                 path.join(__dirname, 'client', '.env'));
+  console.log('✅ Copied .env.production to .env to ensure correct variables are used');
+  
+  // Run the URL fix script
   require('./fix-urls');
 } catch (error) {
   console.error('Error running URL fix script:', error.message);

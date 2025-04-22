@@ -1,6 +1,7 @@
 import axios from "axios";
+import ENDPOINTS from "./apiConfig";
 
-// Make sure we use environment variables first, with fallback to localhost
+// Use the API_URL from our central configuration
 const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 console.log("Using API URL:", API_URL);

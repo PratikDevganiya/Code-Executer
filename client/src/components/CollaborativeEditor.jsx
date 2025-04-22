@@ -16,7 +16,11 @@ const CollaborativeEditor = ({ roomId, initialCode, language }) => {
   const decorationsRef = useRef([]);
 
   useEffect(() => {
-    const newSocket = io('http://localhost:5001', {
+    // Use environment variable for socket URL
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || '';
+    console.log('Connecting to socket URL:', socketUrl);
+    
+    const newSocket = io(socketUrl, {
       withCredentials: true
     });
 

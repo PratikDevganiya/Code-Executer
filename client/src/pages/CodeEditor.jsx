@@ -357,8 +357,15 @@ const CodeEditor = () => {
 
     try {
       setLoading(true);
+      // Use the base URL from environment variables
+      const executeUrl = import.meta.env.VITE_API_URL.includes('api') 
+        ? import.meta.env.VITE_API_URL.replace('/api', '/execute') 
+        : import.meta.env.VITE_BASE_URL + '/execute' || '/execute';
+      
+      console.log('Executing code at URL:', executeUrl);
+      
       const response = await axios.post(
-        "http://localhost:5001/execute",
+        executeUrl,
         { code, language, input },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -780,9 +787,9 @@ const CodeEditor = () => {
         shareId
       };
       
-      // Send to server to save
+      // Send to server to save - use configured axios instance
       const response = await axios.post(
-        "http://localhost:5001/api/share",
+        "/api/share",
         sharedCodeData,
         {
           headers: { 
@@ -822,11 +829,12 @@ const CodeEditor = () => {
         // Load file content
         const loadFile = async () => {
           try {
-            const response = await axios.get(`http://localhost:5001/api/files/${location.state.fileId}`, {
+            // Use the API URL from environment variables
+            const fileResponse = await axios.get(`/api/files/${location.state.fileId}`, {
               headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
             });
             
-            const file = response.data;
+            const file = fileResponse.data;
             
             // Only set file content and show file manager if it was previously open
             if (wasFileManagerOpen) {
