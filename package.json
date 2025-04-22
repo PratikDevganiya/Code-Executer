@@ -1,0 +1,26 @@
+{
+  "name": "code-executor",
+  "version": "1.0.0",
+  "description": "Code execution and collaboration platform",
+  "main": "index.js",
+  "scripts": {
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install",
+    "client": "cd client && npm run dev",
+    "server": "cd server && npm run dev",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "build": "bash deploy.sh",
+    "start": "cd server && npm start"
+  },
+  "keywords": [
+    "code",
+    "execution",
+    "collaboration",
+    "react",
+    "node"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.0.1"
+  }
+}

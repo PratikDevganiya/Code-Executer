@@ -11,7 +11,7 @@ import {
   FaLink,
   FaImage,
 } from "react-icons/fa";
-import axios from "axios";
+import axios from "../config/axios";
 
 const UserDetails = ({ user, updateUser }) => {
   if (!user) return null;
@@ -97,18 +97,8 @@ const UserDetails = ({ user, updateUser }) => {
         profileImage: formData.profileImage
       };
 
-      // ✅ Send the data update request
-      const res = await axios.put(
-        `${import.meta.env.VITE_API_URL}/users/update`,
-        updatedData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          withCredentials: true,
-        }
-      );
+      // ✅ Send the data update request using configured axios instance
+      const res = await axios.put('/users/update', updatedData);
 
       // ✅ Update UI with the result
       updateUser(res.data);
@@ -131,8 +121,8 @@ const UserDetails = ({ user, updateUser }) => {
           src={
             formData.profileImage.startsWith("data:image")
               ? formData.profileImage
-              : formData.profileImage.startsWith("/uploads/")
-                ? `${import.meta.env.VITE_API_URL.replace('/api', '')}${formData.profileImage}`
+              : formData.profileImage.startsWith("/")
+                ? formData.profileImage
                 : formData.profileImage
           }
           alt="Profile"

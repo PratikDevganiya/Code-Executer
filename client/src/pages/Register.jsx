@@ -35,7 +35,15 @@ const Register = () => {
       await register(formData.username, formData.email, formData.password);
       navigate("/");
     } catch (error) {
-      setError(error.response?.data?.message || "Failed to create account");
+      console.error("Registration error details:", error);
+      
+      if (error.message === "No token received from server") {
+        setError("Registration failed: No token received");
+      } else if (!error.response) {
+        setError("Network error: Unable to connect to server");
+      } else {
+        setError(error.response?.data?.message || "Failed to create account");
+      }
     } finally {
       setLoading(false);
     }

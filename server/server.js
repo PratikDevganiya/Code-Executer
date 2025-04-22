@@ -3,6 +3,7 @@ const cors = require("cors");
 const connectDB = require("./config/db");
 const http = require("http");
 const { Server } = require("socket.io");
+const path = require('path');
 
 // Load environment variables
 require("dotenv").config();
@@ -19,7 +20,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "http://localhost:3000"],
+    origin: ["http://localhost:5173", "http://localhost:3000", process.env.CLIENT_URL || "*"],
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -190,12 +191,18 @@ app.use(express.json({ limit: '100mb' })); // Ensure JSON is parsed before route
 app.use(express.urlencoded({ extended: true, limit: '100mb'  }));
 
 // ✅ CORS Configuration
-const allowedOrigins = ["http://localhost:5173", "http://localhost:3000"];
+const allowedOrigins = [
+  "http://localhost:5173", 
+  "http://localhost:3000",
+  // Add your production domain
+  process.env.CLIENT_URL || "*"
+];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Allow requests with no origin (like mobile apps, curl requests)
+      if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes("*")) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
@@ -228,6 +235,9 @@ const codeSubmissionRoutes = require('./routes/codeSubmissionRoutes');
 const shareRoutes = require('./routes/shareRoutes');
 const fileRoutes = require('./routes/fileRoutes');
 
+// ✅ Serve static files from the public directory
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Routes
 app.use('/api/users', userRoutes); // This includes auth routes (login/register)
 app.use('/api/code', codeRoutes);
@@ -254,6 +264,16 @@ app.post("/execute", async (req, res) => {
 });
 
 app.get("/languages", getSupportedLanguages);
+
+// ✅ Catch-all route to handle client-side routing
+app.get('*', (req, res) => {
+  // Skip API routes
+  if (req.url.startsWith('/api') || req.url.startsWith('/execute') || req.url.startsWith('/languages')) {
+    return res.status(404).json({ message: 'API endpoint not found' });
+  }
+  // Serve the index.html for all other routes (for client-side routing)
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // ✅ Error Handler
 app.use((err, req, res, next) => {

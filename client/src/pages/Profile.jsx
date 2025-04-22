@@ -24,10 +24,9 @@ const Profile = () => {
 
     const fetchData = async () => {
       try {
-        const baseURL = "http://localhost:5001/api/code";
         const [submissionsRes, collabRes] = await Promise.all([
-          axios.get(`${baseURL}/submissions`),
-          axios.get(`${baseURL}/collaborations`),
+          axios.get('/code/submissions'),
+          axios.get('/code/collaborations'),
         ]);
 
         setSubmissions(Array.isArray(submissionsRes.data) ? submissionsRes.data : []);

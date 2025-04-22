@@ -19,7 +19,15 @@ const Login = () => {
       await login(email, password);
       navigate("/");
     } catch (error) {
-      setError(error.response?.data?.message || "Failed to login");
+      console.error("Login error details:", error);
+      
+      if (error.message === "No token received from server") {
+        setError("Authentication failed: No token received");
+      } else if (!error.response) {
+        setError("Network error: Unable to connect to server");
+      } else {
+        setError(error.response?.data?.message || "Failed to login");
+      }
     } finally {
       setLoading(false);
     }

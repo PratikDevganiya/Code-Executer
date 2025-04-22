@@ -22,6 +22,8 @@ export const AuthProvider = ({ children }) => {
       const res = await axios.get('/users/profile');
       setUser(res.data);
     } catch (error) {
+      console.error('Auth check failed:', error.message);
+      // Clear token if it's invalid
       localStorage.removeItem('token');
     } finally {
       setLoading(false);
@@ -35,10 +37,16 @@ export const AuthProvider = ({ children }) => {
         email,
         password,
       });
-      localStorage.setItem('token', res.data.token);
-      setUser(res.data);
-      return res.data;
+      
+      if (res.data && res.data.token) {
+        localStorage.setItem('token', res.data.token);
+        setUser(res.data);
+        return res.data;
+      } else {
+        throw new Error('No token received from server');
+      }
     } catch (error) {
+      console.error('Registration error:', error.message);
       throw error;
     }
   };
@@ -49,10 +57,16 @@ export const AuthProvider = ({ children }) => {
         email,
         password,
       });
-      localStorage.setItem('token', res.data.token);
-      setUser(res.data);
-      return res.data;
+      
+      if (res.data && res.data.token) {
+        localStorage.setItem('token', res.data.token);
+        setUser(res.data);
+        return res.data;
+      } else {
+        throw new Error('No token received from server');
+      }
     } catch (error) {
+      console.error('Login error:', error.message);
       throw error;
     }
   };
