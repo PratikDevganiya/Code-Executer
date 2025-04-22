@@ -46,7 +46,7 @@ const copyDir = (src, dest) => {
 };
 
 // Step 0: Fix URLs in client code
-console.log('\n\n📦 Step 0: Fixing hardcoded URLs in client code...');
+console.log('\n\n📦 Step 0: Fixing hardcoded URLs and environment variables...');
 try {
   // Force production environment variables
   console.log('Ensuring production environment variables are applied...');
@@ -55,10 +55,17 @@ try {
                  path.join(__dirname, 'client', '.env'));
   console.log('✅ Copied .env.production to .env to ensure correct variables are used');
   
+  // Apply emergency fixes
+  console.log('Applying emergency fixes for URLs and environment variables...');
+  require('./emergency-fix');
+  require('./fix-direct-urls');
+  
   // Run the URL fix script
   require('./fix-urls');
+  
+  console.log('✅ All fixes applied successfully');
 } catch (error) {
-  console.error('Error running URL fix script:', error.message);
+  console.error('Error applying fixes:', error.message);
   console.log('Continuing with build process...');
 }
 
