@@ -3,32 +3,7 @@ services:
     name: codeboost
     env: node
     plan: free
-    buildCommand: |
-      # Print Node.js version for debugging
-      echo "Using Node.js $(node --version)"
-      
-      # Install dependencies
-      npm install
-      
-      # Install client dependencies and build
-      cd client
-      npm install
-      
-      # Fix potential crypto issues with Vite
-      export NODE_OPTIONS="--no-experimental-fetch --openssl-legacy-provider"
-      
-      npm run build
-      cd ..
-      
-      # Install server dependencies
-      cd server
-      npm install
-      
-      # Create public directory in server
-      mkdir -p public
-      
-      # Copy client build to server/public
-      cp -r ../client/dist/* public/
+    buildCommand: chmod +x render-build.sh && ./render-build.sh
     startCommand: cd server && node server.js
     envVars:
       - key: MONGODB_URI

@@ -4,6 +4,7 @@ const connectDB = require("./config/db");
 const http = require("http");
 const { Server } = require("socket.io");
 const path = require('path');
+const fs = require('fs');
 
 // Load environment variables
 require("dotenv").config();
@@ -228,6 +229,22 @@ app.get("/", (req, res) => {
   res.send("🚀 Server is running...");
 });
 
+// Debug route to check file paths
+app.get("/debug-paths", (req, res) => {
+  const paths = {
+    currentDir: __dirname,
+    publicDir: path.join(__dirname, 'public'),
+    indexHtml: path.join(__dirname, 'public', 'index.html'),
+    indexHtmlExists: fs.existsSync(path.join(__dirname, 'public', 'index.html')),
+    publicDirExists: fs.existsSync(path.join(__dirname, 'public')),
+    publicDirContents: fs.existsSync(path.join(__dirname, 'public')) ? 
+      fs.readdirSync(path.join(__dirname, 'public')) : [],
+    environment: process.env.NODE_ENV || 'development'
+  };
+  
+  res.json(paths);
+});
+
 // ✅ Import Routes
 const userRoutes = require('./routes/userRoutes');
 const codeRoutes = require('./routes/codeRoutes');
@@ -271,8 +288,26 @@ app.get('*', (req, res) => {
   if (req.url.startsWith('/api') || req.url.startsWith('/execute') || req.url.startsWith('/languages')) {
     return res.status(404).json({ message: 'API endpoint not found' });
   }
-  // Serve the index.html for all other routes (for client-side routing)
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  
+  // Log directory content for debugging
+  console.log('Current directory:', __dirname);
+  console.log('Public path:', path.join(__dirname, 'public'));
+  
+  try {
+    // Check if index.html exists
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    if (fs.existsSync(indexPath)) {
+      console.log('Index.html exists at:', indexPath);
+      // Serve the index.html for all other routes (for client-side routing)
+      res.sendFile(indexPath);
+    } else {
+      console.error('Index.html not found at:', indexPath);
+      res.status(404).send('Frontend files not found');
+    }
+  } catch (error) {
+    console.error('Error serving index.html:', error);
+    res.status(500).send('Server error');
+  }
 });
 
 // ✅ Error Handler
