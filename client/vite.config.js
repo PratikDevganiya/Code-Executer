@@ -8,4 +8,12 @@ export default defineConfig({
     tailwindcss(),
     react()
   ],
+  build: {
+    // Ensure output directory is correctly set
+    outDir: 'dist',
+    // Generate source maps for better debugging
+    sourcemap: process.env.NODE_ENV === 'development',
+    // Ensure index.html is generated
+    emptyOutDir: true,
+  },
 })

@@ -3,7 +3,52 @@ services:
     name: codeboost
     env: node
     plan: free
-    buildCommand: chmod +x render-build.sh && ./render-build.sh
+    buildCommand: |
+      echo "=========== STARTING BUILD PROCESS ==========="
+      
+      # Print Node.js version
+      echo "Using Node.js $(node --version)"
+      
+      # Show current directory and structure
+      echo "Current directory: $(pwd)"
+      ls -la
+      
+      # Install root dependencies
+      npm install
+      
+      # Build client
+      cd client
+      npm install
+      export NODE_OPTIONS="--no-experimental-fetch --openssl-legacy-provider"
+      npm run build
+      
+      # Show what was built
+      echo "Client build directory content:"
+      ls -la dist/
+      
+      # Go back to root
+      cd ..
+      
+      # Set up server
+      cd server
+      npm install
+      
+      # Ensure public directory exists
+      mkdir -p public
+      
+      # Copy client build files with verbose output
+      echo "Copying files from ../client/dist/* to public/"
+      cp -rv ../client/dist/* public/
+      
+      # Verify the files were copied correctly
+      echo "Server public directory content:"
+      ls -la public/
+      
+      # Create a fallback index.html if needed
+      if [ ! -f "public/index.html" ]; then
+        echo "WARNING: index.html not found! Creating a placeholder..."
+        echo "<html><head><title>CodeBoost</title></head><body><h1>CodeBoost Application</h1><p>Something went wrong with the build process. The index.html file is missing.</p></body></html>" > public/index.html
+      fi
     startCommand: cd server && node server.js
     envVars:
       - key: MONGODB_URI
@@ -16,5 +61,5 @@ services:
         sync: false
       - key: JUDGE0_API_KEY
         sync: false
-    healthCheckPath: /
+    healthCheckPath: /debug-paths
     nodeVersion: 18.17.0
