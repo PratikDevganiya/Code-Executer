@@ -1,7 +1,12 @@
 import axios from "axios";
 
+// Make sure we use environment variables first, with fallback to localhost
+const API_URL = import.meta.env.VITE_API_URL || "/api";
+
+console.log("Using API URL:", API_URL);
+
 const instance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5001/api", // ✅ Fix: Use import.meta.env
+  baseURL: API_URL,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -15,6 +20,10 @@ instance.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Log request for debugging
+    console.log(`${config.method.toUpperCase()} ${config.baseURL}${config.url}`);
+    
     return config;
   },
   (error) => Promise.reject(error)

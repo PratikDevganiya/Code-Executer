@@ -45,6 +45,15 @@ const copyDir = (src, dest) => {
   }
 };
 
+// Step 0: Fix URLs in client code
+console.log('\n\n📦 Step 0: Fixing hardcoded URLs in client code...');
+try {
+  require('./fix-urls');
+} catch (error) {
+  console.error('Error running URL fix script:', error.message);
+  console.log('Continuing with build process...');
+}
+
 // Step 1: Install root dependencies
 console.log('\n\n📦 Step 1: Installing root dependencies...');
 if (!runCommand('npm install')) {

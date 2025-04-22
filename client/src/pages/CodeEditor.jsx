@@ -128,7 +128,11 @@ const CodeEditor = () => {
         console.log('Setting up socket connection for room:', roomId);
       }
       
-      const newSocket = io('http://localhost:5001', {
+      // Use environment variable for socket URL
+      const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5001';
+      console.log('Connecting to socket URL:', socketUrl);
+      
+      const newSocket = io(socketUrl, {
         withCredentials: true
       });
 
