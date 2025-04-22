@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: codeboost
+    env: node
+    plan: free
+    buildCommand: |
+      # Install dependencies
+      npm install
+      
+      # Install client dependencies and build
+      cd client
+      npm install
+      npm run build
+      cd ..
+      
+      # Install server dependencies
+      cd server
+      npm install
+      cd ..
+      
+      # Create public directory in server
+      mkdir -p server/public
+      
+      # Copy client build to server/public
+      cp -r client/dist/* server/public/
+    startCommand: cd server && node server.js
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: PORT
+        value: 10000
+      - key: CLIENT_URL
+        value: "*"
+      - key: JUDGE0_API_URL
+        sync: false
+      - key: JUDGE0_API_KEY
+        sync: false

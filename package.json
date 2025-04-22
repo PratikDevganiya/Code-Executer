@@ -2,14 +2,17 @@
   "name": "code-executor",
   "version": "1.0.0",
   "description": "Code execution and collaboration platform",
-  "main": "index.js",
+  "main": "server/server.js",
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "scripts": {
     "install:all": "npm install && cd client && npm install && cd ../server && npm install",
     "client": "cd client && npm run dev",
     "server": "cd server && npm run dev",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "build": "bash deploy.sh",
-    "start": "cd server && npm start"
+    "build": "./build.sh",
+    "start": "cd server && node server.js"
   },
   "keywords": [
     "code",
@@ -20,7 +23,7 @@
   ],
   "author": "",
   "license": "ISC",
-  "devDependencies": {
+  "dependencies": {
     "concurrently": "^8.0.1"
   }
 }
