@@ -331,6 +331,29 @@ if (fs.existsSync(serverPath)) {
 }));`
     );
     
+    // Make sure the server uses the correct PORT from environment variable
+    if (newContent.includes('const PORT = process.env.PORT || 5000')) {
+      console.log('PORT configuration already correct');
+    } else {
+      // Fix the port configuration
+      newContent = newContent.replace(
+        /const PORT = .*?;/,
+        `const PORT = process.env.PORT || 10000;`
+      );
+      console.log('✅ Updated PORT configuration in server.js');
+    }
+    
+    // Add a console log to show which port the server is using
+    if (!newContent.includes('console.log(`Server running on:')) {
+      newContent = newContent.replace(
+        /console\.log\(`🚀 Server running on port \${PORT}`\);/,
+        `console.log(\`🚀 Server running on port \${PORT}\`);
+console.log(\`Server environment: \${process.env.NODE_ENV || 'development'}\`);
+console.log(\`Server running on: http://localhost:\${PORT}\`);`
+      );
+      console.log('✅ Added extra debugging logs for server startup');
+    }
+    
     fs.writeFileSync(serverPath, newContent, 'utf8');
     console.log('✅ Updated CORS configuration in server.js');
   } else {
@@ -340,11 +363,62 @@ if (fs.existsSync(serverPath)) {
   console.log('⚠️ server.js not found');
 }
 
+// Add a health check endpoint if not already present
+if (fs.existsSync(serverPath)) {
+  console.log('Adding health check endpoint...');
+  
+  let content = fs.readFileSync(serverPath, 'utf8');
+  
+  if (!content.includes('/health-check')) {
+    // Find a good spot to insert the health check endpoint
+    let newContent = content;
+    
+    if (content.includes('// ✅ Test Route')) {
+      // Insert after test route
+      newContent = content.replace(
+        /\/\/ ✅ Test Route.*?}\);/s,
+        match => `${match}
+
+// ✅ Health Check Endpoint for Render
+app.get('/health-check', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok',
+    message: 'Server is healthy',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});`
+      );
+    } else {
+      // Insert before routes if test route not found
+      newContent = content.replace(
+        /\/\/ ✅ Import Routes/,
+        `// ✅ Health Check Endpoint for Render
+app.get('/health-check', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok',
+    message: 'Server is healthy',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// ✅ Import Routes`
+      );
+    }
+    
+    fs.writeFileSync(serverPath, newContent, 'utf8');
+    console.log('✅ Added health check endpoint to server.js');
+  } else {
+    console.log('Health check endpoint already exists');
+  }
+}
+
 // Update .env.production for server
 const serverEnvPath = path.join(__dirname, 'server', '.env.production');
 const serverEnvContent = `MONGODB_URI="mongodb+srv://pratik:pratik@codeboost.x2dnc.mongodb.net/?retryWrites=true&w=majority&appName=CodeBoost"
 JWT_SECRET="mynameispratik"
-PORT=10000
+PORT=${process.env.PORT || 10000}
 CLIENT_URL="*"
 JUDGE0_API_URL="https://judge0-ce.p.rapidapi.com"
 JUDGE0_API_KEY="76c5bc7fd3mshb8cb6886a11ac21p19f213jsnc397e9a89807"

@@ -16,5 +16,5 @@ services:
         sync: false
       - key: JUDGE0_API_KEY
         sync: false
-    healthCheckPath: /
+    healthCheckPath: /health-check
     nodeVersion: 18.17.0
