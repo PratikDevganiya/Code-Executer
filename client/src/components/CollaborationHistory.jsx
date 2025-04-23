@@ -45,7 +45,7 @@ const CollaborationHistory = ({ history = [], onDelete }) => {
         setLoading(true);
         setError(null);
         
-        const response = await axios.delete(`http://localhost:5001/api/code/collaborations/${id}`, {
+        const response = await axios.delete(`/api/code/collaborations/${id}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         });
         

@@ -55,12 +55,14 @@ try {
                  path.join(__dirname, 'client', '.env'));
   console.log('✅ Copied .env.production to .env to ensure correct variables are used');
   
-  // Apply emergency fixes
-  console.log('Applying emergency fixes for URLs and environment variables...');
+  // Apply comprehensive production fix
+  console.log('Applying comprehensive production build fix...');
+  require('./fix-prod-build');
+  
+  // Apply other fixes as fallback
+  console.log('Applying additional fixes for URLs and environment variables...');
   require('./emergency-fix');
   require('./fix-direct-urls');
-  
-  // Run the URL fix script
   require('./fix-urls');
   
   console.log('✅ All fixes applied successfully');
@@ -125,6 +127,12 @@ if (fs.existsSync('dist')) {
 // Step 3: Set up server
 process.chdir('../server');
 console.log('\n\n📦 Step 3: Setting up server...');
+
+// Apply server CORS fix
+console.log('Applying server CORS configuration fix...');
+require('../fix-server-cors');
+console.log('✅ Server CORS fix applied successfully');
+
 if (!runCommand('npm install')) {
   process.exit(1);
 }

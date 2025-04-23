@@ -1,37 +1,46 @@
 #!/bin/bash
 
-# Stop the script if any command fails
-set -e
+# ===========================================
+# Improved CodeBoost Deployment Script
+# ===========================================
 
-echo "🚀 Starting deployment process..."
+echo "=== Starting CodeBoost Deployment Process ==="
 
-# Step 1: Install client dependencies
-echo "📥 Installing client dependencies..."
+# Ensure we start with clean environment
+echo "Cleaning up any previous builds..."
+rm -rf client/dist
+rm -rf server/public
+
+# Apply fixes first
+echo "Applying all fixes..."
+node fix-prod-build.js
+node fix-server-cors.js
+node fix-urls.js
+node fix-direct-urls.js
+node emergency-fix.js
+
+# Build the client
+echo "Building client..."
 cd client
 npm install
-
-# Step 2: Build the client
-echo "📦 Building client..."
 npm run build
-cd ..
 
-# Step 3: Install server dependencies
-echo "📥 Installing server dependencies..."
-cd server
+# Check if build was successful
+if [ ! -d "dist" ]; then
+  echo "Client build failed!"
+  exit 1
+fi
+
+# Set up server
+echo "Setting up server..."
+cd ../server
 npm install
-cd ..
 
-# Step 4: Create or clean the server's public directory
-echo "🧹 Preparing server's public directory..."
-rm -rf server/public
-mkdir -p server/public
+# Copy client build to server
+echo "Copying client build to server..."
+mkdir -p public
+cp -r ../client/dist/* public/
 
-# Step 5: Copy the client build to the server's public directory
-echo "📋 Copying client build to server..."
-cp -r client/dist/* server/public/
-
-# Step 6: Setup the server to serve static files
-echo "✅ Deployment preparation complete!"
-echo "Run 'cd server && npm start' to start the application"
-
-# Note: You can add a 'npm install' step if needed
+echo "=== Deployment build completed successfully ==="
+echo "The application is now ready to be deployed to Render.com"
+echo "Run 'git add . && git commit -m \"Deployment build\" && git push' to deploy"

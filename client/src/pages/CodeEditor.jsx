@@ -129,7 +129,7 @@ const CodeEditor = () => {
       }
       
       // Use environment variable for socket URL
-      const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5001';
+      const socketUrl = import.meta.env.VITE_SOCKET_URL || '';
       console.log('Connecting to socket URL:', socketUrl);
       
       const newSocket = io(socketUrl, {
@@ -358,9 +358,9 @@ const CodeEditor = () => {
     try {
       setLoading(true);
       // Use the base URL from environment variables
-      const executeUrl = import.meta.env.VITE_API_URL.includes('api') 
+      const executeUrl = import.meta.env.VITE_API_URL.includes('/api') 
         ? import.meta.env.VITE_API_URL.replace('/api', '/execute') 
-        : import.meta.env.VITE_BASE_URL + '/execute' || '/execute';
+        : (import.meta.env.VITE_BASE_URL + '/execute' || '/execute');
       
       console.log('Executing code at URL:', executeUrl);
       
@@ -484,7 +484,7 @@ const CodeEditor = () => {
       
       try {
         const response = await axios.post(
-          "http://localhost:5001/api/code/collaborations",
+          "/api/code/collaborations",
           {
             roomId: sessionId,
             code: code,
@@ -671,7 +671,7 @@ const CodeEditor = () => {
         
         try {
           const response = await axios.post(
-            "http://localhost:5001/api/code/collaborations", 
+            "/api/code/collaborations", 
             collaborationData,
             {
               headers: { 
@@ -713,7 +713,7 @@ const CodeEditor = () => {
         
         if (submissionId) {
           await axios.put(
-            `http://localhost:5001/api/submissions/${submissionId}`, 
+            `/api/submissions/${submissionId}`, 
             submissionData,
             {
               headers: { 
@@ -725,7 +725,7 @@ const CodeEditor = () => {
           toast.success("Code updated successfully");
         } else {
           await axios.post(
-            "http://localhost:5001/api/submissions",
+            "/api/submissions",
             submissionData,
             {
               headers: { 

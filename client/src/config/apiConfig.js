@@ -3,6 +3,14 @@ const API_URL = import.meta.env.VITE_API_URL || '/api';
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || '';
 const BASE_URL = import.meta.env.VITE_BASE_URL || '';
 
+// Log configuration
+console.log('API Configuration:', {
+  API_URL,
+  SOCKET_URL,
+  BASE_URL,
+  EXECUTE_URL: getExecuteUrl(),
+});
+
 // Determine execute URL
 const getExecuteUrl = () => {
   if (API_URL.includes('/api')) {
@@ -38,13 +46,5 @@ export const ENDPOINTS = {
   },
   SOCKET: SOCKET_URL,
 };
-
-// Log configuration
-console.log('API Configuration:', {
-  API_URL,
-  SOCKET_URL,
-  BASE_URL,
-  EXECUTE_URL: ENDPOINTS.CODE.EXECUTE,
-});
 
 export default ENDPOINTS;

@@ -1,8 +1,7 @@
 import axios from "axios";
-import ENDPOINTS from "./apiConfig";
 
-// Use the API_URL from our central configuration
-const API_URL = import.meta.env.VITE_API_URL || "/api";
+// Use environment variable API URL with fallback for production
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 console.log("Using API URL:", API_URL);
 
@@ -30,13 +29,13 @@ instance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ✅ Response interceptor for handling 401 (Unauthorized)
+// ✅ Response interceptor for handling errors
 instance.interceptors.response.use(
   (response) => response,
   (error) => {
     console.error('API Error:', error.message);
     
-    // Handle network errors (CORS, server down, etc.)
+    // Handle network errors
     if (!error.response) {
       console.error('Network Error: Please check your connection or server availability');
     }
@@ -44,8 +43,6 @@ instance.interceptors.response.use(
     // Handle auth errors
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
-      // You can add a redirect to login here if needed
-      // window.location.href = '/login';
     }
     
     // Handle CORS errors

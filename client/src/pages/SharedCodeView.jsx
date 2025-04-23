@@ -17,7 +17,7 @@ const SharedCodeView = () => {
         setLoading(true);
         setError(null);
         
-        const response = await axios.get(`http://localhost:5001/api/share/${shareId}`);
+        const response = await axios.get(`/api/share/${shareId}`);
         setSharedCode(response.data);
       } catch (err) {
         console.error('Error fetching shared code:', err);

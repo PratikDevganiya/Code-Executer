@@ -51,7 +51,7 @@ const SaveCodeButton = ({ code, language, input, output, submissionId, isCollabo
         
         try {
           const response = await axios.post(
-            "http://localhost:5001/api/code/collaborations", 
+            "/api/code/collaborations", 
             collaborationData,
             {
               headers: { 
@@ -111,7 +111,7 @@ const SaveCodeButton = ({ code, language, input, output, submissionId, isCollabo
         
         if (submissionId) {
           await axios.put(
-            `http://localhost:5001/api/submissions/${submissionId}`, 
+            `/api/submissions/${submissionId}`, 
             submissionData,
             {
               headers: { 
@@ -122,7 +122,7 @@ const SaveCodeButton = ({ code, language, input, output, submissionId, isCollabo
           );
         } else {
           await axios.post(
-            "http://localhost:5001/api/submissions",
+            "/api/submissions",
             submissionData,
             {
               headers: { 

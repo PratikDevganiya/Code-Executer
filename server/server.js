@@ -290,7 +290,7 @@ const fileRoutes = require('./routes/fileRoutes');
 
 // ✅ Serve static files from the public directory
 const publicPath = path.join(__dirname, 'public');
-console.log("Setting up static file serving from:", publicPath);
+// console.log("Setting up static file serving from:", publicPath);
 app.use(express.static(publicPath));
 
 // Routes

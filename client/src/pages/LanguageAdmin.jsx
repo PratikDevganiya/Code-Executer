@@ -15,7 +15,7 @@ const LanguageAdmin = () => {
     const fetchLanguages = async () => {
       try {
         setLoading(true);
-        const response = await axios.get("http://localhost:5001/api/code/languages");
+        const response = await axios.get("/api/code/languages");
         setLanguages(response.data.languages);
         setError(null);
       } catch (err) {
@@ -32,7 +32,7 @@ const LanguageAdmin = () => {
   const getInstallInstructions = async (language) => {
     try {
       setSelectedLanguage(language);
-      const response = await axios.get(`http://localhost:5001/api/code/languages/${language}/install`);
+      const response = await axios.get(`/api/code/languages/${language}/install`);
       setInstallInstructions(response.data);
     } catch (err) {
       setInstallInstructions({ error: "Failed to fetch installation instructions" });

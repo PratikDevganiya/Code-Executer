@@ -127,13 +127,16 @@ const RecentSubmissions = () => {
         setLoading(true);
         // Fetch both code submissions and file submissions
         const [codeResponse, fileResponse] = await Promise.all([
-          axios.get("http://localhost:5001/api/submissions", {
+          axios.get("/api/submissions", {
             headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
           }),
-          axios.get("http://localhost:5001/api/files", {
+          axios.get("/api/files", {
             headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
           })
         ]);
+        
+        console.log("Code submissions response:", codeResponse.data);
+        console.log("File response:", fileResponse.data);
         
         // Get code submissions - handle both array and object response formats
         const codeSubmissions = Array.isArray(codeResponse.data) 
@@ -226,12 +229,12 @@ const RecentSubmissions = () => {
       try {
         if (submission.fileName) {
           // Delete file
-          await axios.delete(`http://localhost:5001/api/files/${submission._id}`, {
+          await axios.delete(`/api/files/${submission._id}`, {
             headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
           });
         } else {
           // Delete code submission
-          await axios.delete(`http://localhost:5001/api/submissions/${submission._id}`, {
+          await axios.delete(`/api/submissions/${submission._id}`, {
             headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
           });
         }

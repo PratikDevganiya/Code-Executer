@@ -15,7 +15,7 @@ const SubmissionDetail = () => {
     const fetchSubmission = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`http://localhost:5001/api/submissions/${id}`, {
+        const response = await axios.get(`/api/submissions/${id}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         setSubmission(response.data);
