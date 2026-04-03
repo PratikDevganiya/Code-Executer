@@ -4,7 +4,6 @@
  * Development Environment Setup Script
  * Sets up the environment for local development
  */
-
 const fs = require('fs');
 const path = require('path');
 
