@@ -3,7 +3,7 @@ services:
     name: codeboost
     env: node
     plan: free
-    buildCommand: node render-build.js
+    buildCommand: bash scripts/render-build.sh
     startCommand: cd server && node server.js
     envVars:
       - key: MONGODB_URI
