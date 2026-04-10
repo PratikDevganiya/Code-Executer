@@ -34,9 +34,9 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#88BDBC] font-['Poppins'] px-4 -mt-20">
+    <div className="min-h-screen flex items-center justify-center bg-[#88BDBC] font-['Poppins'] px-4 py-8 sm:py-12">
       {/* Glassmorphic Login Card */}
-      <div className="max-w-md w-full p-8 bg-white backdrop-blur-md rounded-xl shadow-2xl border border-[#254E58]/30">
+      <div className="max-w-md w-full p-6 sm:p-8 bg-white backdrop-blur-md rounded-xl shadow-2xl border border-[#254E58]/30">
         {/* Title */}
         <div className="text-center">
           <h2 className="text-3xl font-bold text-[#254E58] font-['Righteous'] tracking-wide">

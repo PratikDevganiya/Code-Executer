@@ -34,8 +34,8 @@ const SharedCodeView = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#88BDBC] p-6 flex flex-col items-center justify-center font-['Poppins']">
-        <div className="bg-white p-6 rounded-xl shadow-lg max-w-4xl w-full flex justify-center">
+      <div className="min-h-screen bg-[#88BDBC] p-4 sm:p-6 flex flex-col items-center justify-center font-['Poppins']">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg max-w-4xl w-full flex justify-center">
           <LoadingSpinner />
         </div>
       </div>
@@ -44,8 +44,8 @@ const SharedCodeView = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#88BDBC] p-6 flex flex-col items-center justify-center font-['Poppins']">
-        <div className="bg-white p-6 rounded-xl shadow-lg max-w-4xl w-full">
+      <div className="min-h-screen bg-[#88BDBC] p-4 sm:p-6 flex flex-col items-center justify-center font-['Poppins']">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg max-w-4xl w-full">
           <div className="text-red-500 text-center">
             <h2 className="text-2xl font-bold mb-4">Error</h2>
             <p>{error}</p>
@@ -66,10 +66,10 @@ const SharedCodeView = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#88BDBC] p-6 flex flex-col items-center font-['Poppins']">
-      <div className="bg-white p-6 rounded-xl shadow-lg max-w-4xl w-full mb-4">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-[#254E58] flex items-center gap-2">
+    <div className="min-h-screen bg-[#88BDBC] p-4 sm:p-6 flex flex-col items-center font-['Poppins']">
+      <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg max-w-4xl w-full mb-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#254E58] flex flex-wrap items-center gap-2">
             <span>Shared Code</span>
             <span className="text-sm bg-[#88BDBC]/20 text-[#254E58] px-2 py-1 rounded-full">
               {sharedCode.language}
@@ -77,7 +77,7 @@ const SharedCodeView = () => {
           </h1>
           <Link 
             to="/" 
-            className="flex items-center gap-1 text-[#254E58] hover:text-[#88BDBC] transition-colors"
+            className="flex items-center gap-1 text-sm sm:text-base text-[#254E58] hover:text-[#88BDBC] transition-colors"
           >
             <FaArrowLeft size={14} />
             <span>Back to Editor</span>
@@ -86,7 +86,7 @@ const SharedCodeView = () => {
         
         <div className="border border-[#88BDBC] rounded-lg overflow-hidden shadow-md mb-6">
           <Editor
-            height="60vh"
+            height="min(60vh, 520px)"
             language={sharedCode.language?.toLowerCase()}
             value={sharedCode.code}
             theme="vs-dark"

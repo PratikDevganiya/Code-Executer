@@ -16,5 +16,9 @@ services:
         sync: false
       - key: JUDGE0_API_KEY
         sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-5-nano
     healthCheckPath: /health-check
     nodeVersion: 18.17.0

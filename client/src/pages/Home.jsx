@@ -47,16 +47,16 @@ const FeatureCard = ({ feature, index, isVisible }) => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <div className="bg-white rounded-xl p-6 flex flex-col md:flex-row items-start gap-6 border-l-4 border-[#88BDBC] shadow-lg hover:shadow-xl transition-all duration-300 relative overflow-hidden h-full">
+      <div className="bg-white rounded-xl p-5 sm:p-6 flex flex-col md:flex-row items-start gap-4 sm:gap-6 border-l-4 border-[#88BDBC] shadow-lg hover:shadow-xl transition-all duration-300 relative overflow-hidden h-full">
         <div className="absolute -right-20 -bottom-20 w-60 h-60 bg-[#88BDBC]/5 rounded-full"></div>
 
         <div
           ref={iconRef}
-          className={`bg-[#88BDBC] p-4 rounded-xl shadow-md relative z-10 icon-container ${
+          className={`bg-[#88BDBC] p-3 sm:p-4 rounded-xl shadow-md relative z-10 icon-container ${
             isVisible ? "animate-icon" : ""
           }`}
         >
-          <feature.icon className="text-3xl text-white relative z-10" />
+          <feature.icon className="text-2xl sm:text-3xl text-white relative z-10" />
           <div
             className={`absolute -top-2 -right-2 bg-${feature.color}-400 w-4 h-4 rounded-full animate-pulse`}
           ></div>
@@ -64,7 +64,7 @@ const FeatureCard = ({ feature, index, isVisible }) => {
 
         <div className="space-y-3 relative z-10 flex-1">
           <h3
-            className={`text-xl font-bold text-[#254E58] font-['Poppins'] feature-title ${
+            className={`text-lg sm:text-xl font-bold text-[#254E58] font-['Poppins'] feature-title ${
               isVisible ? "animate-title" : ""
             }`}
           >
@@ -79,11 +79,11 @@ const FeatureCard = ({ feature, index, isVisible }) => {
           </p>
 
           {feature.bullets && (
-            <div className="flex flex-wrap gap-3 mt-4 feature-tags-container">
+              <div className="flex flex-wrap gap-2 sm:gap-3 mt-4 feature-tags-container">
               {feature.bullets.map((bullet, idx) => (
                 <span
                   key={idx}
-                  className={`inline-flex items-center gap-1 bg-[#88BDBC]/10 px-3 py-1 rounded-full text-sm text-[#254E58] feature-tag ${
+                  className={`inline-flex items-center gap-1 bg-[#88BDBC]/10 px-3 py-1 rounded-full text-xs sm:text-sm text-[#254E58] feature-tag ${
                     isVisible ? "animate-tag" : ""
                   }`}
                   style={{ "--tag-index": idx }}
@@ -113,7 +113,7 @@ const CodeExample = () => {
 
   return (
     <div
-      className={`bg-[#254E58] p-6 rounded-xl shadow-lg ${
+      className={`bg-[#254E58] p-4 sm:p-6 rounded-xl shadow-lg w-full ${
         visible ? "slide-in-right" : "opacity-0"
       }`}
     >
@@ -122,7 +122,7 @@ const CodeExample = () => {
         <div className="w-3 h-3 rounded-full bg-[#E6D4A4]"></div>
         <div className="w-3 h-3 rounded-full bg-[#A4E6A4]"></div>
       </div>
-      <pre className="text-white font-['Fira Code'] text-sm p-4 bg-[#112D32] rounded-lg overflow-x-auto relative">
+      <pre className="text-white font-['Fira Code'] text-xs sm:text-sm p-3 sm:p-4 bg-[#112D32] rounded-lg overflow-x-auto relative">
         <div className="shimmer-effect absolute inset-0"></div>
         <code>{`function welcomeToCodeBoost() {
   console.log("Hello, Developer!");
@@ -228,29 +228,29 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-[#88BDBC] font-['Poppins']">
       {/* Hero Section */}
-      <div className="container mx-auto px-6">
-        <div className="flex flex-col md:flex-row items-center justify-between min-h-[80vh]">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-10 py-10 md:min-h-[80vh]">
           {/* Left Side Content */}
-          <div className="md:w-1/2 space-y-6 slide-in-left">
-            <h1 className="text-6xl font-bold text-white font-['Righteous'] leading-tight">
+          <div className="w-full md:w-1/2 space-y-6 slide-in-left text-center md:text-left">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white font-['Righteous'] leading-tight">
               Code. Execute.
               <br />
               <span className="text-white/80">Learn. Grow.</span>
             </h1>
-            <p className="text-lg text-white/90 font-['Inter'] max-w-md fade-in-up delay-300">
+            <p className="text-base sm:text-lg text-white/90 font-['Inter'] max-w-xl md:max-w-md mx-auto md:mx-0 fade-in-up delay-300">
               Your one-stop platform for writing and executing code in multiple
               programming languages.
             </p>
-            <div className="flex gap-4 pt-4 fade-in-up delay-500">
+            <div className="flex flex-col sm:flex-row gap-4 pt-4 fade-in-up delay-500">
               <Link
                 to="/editor"
-                className="bg-[#254E58] text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-[#112D32] transition-transform duration-200 hover:scale-105 shadow-md pulse-animation"
+                className="bg-[#254E58] text-white px-6 py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-[#112D32] transition-transform duration-200 hover:scale-105 shadow-md pulse-animation"
               >
                 Try Editor <FaArrowRight />
               </Link>
               <Link
                 to="/register"
-                className="border-2 border-white text-white px-6 py-3 rounded-lg hover:bg-white hover:text-[#88BDBC] transition-colors duration-200 hover:scale-105 shadow-md"
+                className="border-2 border-white text-white px-6 py-3 rounded-lg text-center hover:bg-white hover:text-[#88BDBC] transition-colors duration-200 hover:scale-105 shadow-md"
               >
                 Sign Up Free
               </Link>
@@ -258,7 +258,7 @@ const Home = () => {
           </div>
 
           {/* Right Side Code Example */}
-          <div className="md:w-1/2 mt-10 md:mt-0 float-animation">
+          <div className="w-full md:w-1/2 mt-2 md:mt-0 float-animation">
             <CodeExample />
           </div>
         </div>
@@ -267,7 +267,7 @@ const Home = () => {
       {/* Advanced Features Section */}
       <div
         ref={featuresRef}
-        className={`bg-white py-20 relative overflow-hidden ${
+          className={`bg-white py-14 sm:py-20 relative overflow-hidden ${
           isVisible ? "features-visible" : "features-hidden"
         }`}
       >
@@ -276,21 +276,21 @@ const Home = () => {
         <div className="absolute -left-20 top-40 w-40 h-40 rounded-full bg-[#88BDBC]/10 pulse-animation"></div>
         <div className="absolute -right-20 bottom-40 w-40 h-40 rounded-full bg-[#88BDBC]/10 pulse-animation"></div>
 
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="text-center mb-16 fade-in-up">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10">
+          <div className="text-center mb-12 sm:mb-16 fade-in-up">
             {" "}
-            <h2 className="text-5xl font-bold text-[#254E58] mb-4 font-['Righteous']">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#254E58] mb-4 font-['Righteous']">
               CodeBoost Essentials
             </h2>
             <div className="w-24 h-1 bg-[#88BDBC] mx-auto mb-6"></div>
-            <p className="text-[#112D32] font-['Inter'] max-w-2xl mx-auto text-lg">
+            <p className="text-[#112D32] font-['Inter'] max-w-2xl mx-auto text-base sm:text-lg">
               Optimized for High-Performance Development
             </p>
           </div>
 
           <div className="max-w-7xl mx-auto px-4">
             {/* First row - 2 features */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10 mb-6 lg:mb-10">
               <FeatureCard
                 key={0}
                 feature={advancedFeatures[0]}
@@ -306,7 +306,7 @@ const Home = () => {
             </div>
 
             {/* Second row - 2 features */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10 mb-6 lg:mb-10">
               <FeatureCard
                 key={2}
                 feature={advancedFeatures[2]}
@@ -322,7 +322,7 @@ const Home = () => {
             </div>
 
             {/* Third row - 1 feature */}
-            <div className="max-w-2xl mx-auto w-full md:w-2/3">
+            <div className="max-w-2xl mx-auto w-full lg:w-2/3">
               <FeatureCard
                 key={4}
                 feature={advancedFeatures[4]}
@@ -336,7 +336,7 @@ const Home = () => {
 
       {/* Footer */}
       <footer className="border-t border-white/20">
-        <div className="container mx-auto px-6 py-8">
+        <div className="container mx-auto px-4 sm:px-6 py-8">
           <p className="text-center text-white/80 font-['Inter']">
             © 2025 <span className="font-medium">CodeBoost</span>. All rights
             reserved.

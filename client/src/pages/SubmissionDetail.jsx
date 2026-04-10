@@ -43,7 +43,7 @@ const SubmissionDetail = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#EBE5C2] p-8">
+      <div className="min-h-screen bg-[#EBE5C2] p-4 sm:p-8">
         <div className="max-w-4xl mx-auto">
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg flex items-center">
             <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -64,7 +64,7 @@ const SubmissionDetail = () => {
 
   if (!submission) {
     return (
-      <div className="min-h-screen bg-[#EBE5C2] p-8">
+      <div className="min-h-screen bg-[#EBE5C2] p-4 sm:p-8">
         <div className="max-w-4xl mx-auto">
           <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-lg">
             Submission not found
@@ -81,12 +81,12 @@ const SubmissionDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#EBE5C2] p-8">
+    <div className="min-h-screen bg-[#EBE5C2] p-4 sm:p-8">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="bg-[#D3C89F] px-6 py-4">
-            <div className="flex justify-between items-center">
-              <h1 className="text-xl font-['Righteous'] text-[#6B6343]">
+          <div className="bg-[#D3C89F] px-4 sm:px-6 py-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
+              <h1 className="text-lg sm:text-xl font-['Righteous'] text-[#6B6343]">
                 Submission Details
               </h1>
               <Link
@@ -98,9 +98,9 @@ const SubmissionDetail = () => {
             </div>
           </div>
           
-          <div className="p-6 space-y-6">
+          <div className="p-4 sm:p-6 space-y-6">
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1">
                   <p className="text-sm text-[#8B8558] font-['Righteous']">Language</p>
                   <p className="font-['Righteous'] text-yellow-500">{submission.language}</p>
@@ -153,7 +153,7 @@ const SubmissionDetail = () => {
                 </div>
               )}
 
-              <div className="flex items-center space-x-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:space-x-4">
                 <div className="space-y-1">
                   <p className="text-sm text-[#8B8558] font-['Righteous']">Status</p>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${
