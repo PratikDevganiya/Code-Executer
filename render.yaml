@@ -3,7 +3,7 @@ services:
     name: codeboost
     env: node
     plan: free
-    buildCommand: node render-build.js
+    buildCommand: bash scripts/render-build.sh
     startCommand: cd server && node server.js
     envVars:
       - key: MONGODB_URI
@@ -16,5 +16,9 @@ services:
         sync: false
       - key: JUDGE0_API_KEY
         sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-5-nano
     healthCheckPath: /health-check
     nodeVersion: 18.17.0

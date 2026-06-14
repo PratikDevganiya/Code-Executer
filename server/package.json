@@ -6,7 +6,7 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "build": "echo 'No build step required for server'",
-    "deploy": "bash ../deploy.sh && npm start"
+    "deploy": "bash ../scripts/render-build.sh && npm start"
   },
   "dependencies": {
     "axios": "^1.8.2",

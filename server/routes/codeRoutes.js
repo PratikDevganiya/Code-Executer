@@ -21,6 +21,7 @@ router.use((req, res, next) => {
 
 // ✅ Route for code execution
 router.post("/execute", protect, codeController.executeCode);
+router.post("/assistant", protect, codeController.getAIAssistance);
 
 // ✅ Route for fetching submissions (with authentication)
 router.get("/submissions", protect, codeController.getUserSubmissions);

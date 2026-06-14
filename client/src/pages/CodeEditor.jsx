@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import LoadingSpinner from "../components/LoadingSpinner";
 import SaveCodeButton from "../components/SaveCodeButton";
 import FileExplorer from "../components/FileExplorer";
+import AIAssistantPanel from "../components/AIAssistantPanel";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { v4 as uuidv4 } from 'uuid';
 import { FaUsers, FaCopy, FaCheck, FaComments, FaPaperPlane, FaSignInAlt, FaShare, FaFolder } from "react-icons/fa";
@@ -23,7 +24,9 @@ const CodeEditor = () => {
   const navigate = useNavigate();
   const { roomId: urlRoomId } = useParams();
   const submissionData = location.state?.submissionData;
-  const submissionId = location.state?.submissionId;
+  const [currentSubmissionId, setCurrentSubmissionId] = useState(
+    location.state?.submissionId || null
+  );
 
   const [code, setCode] = useState(() => {
     // For collaborative mode, try to get code from localStorage using roomId
@@ -711,9 +714,9 @@ const CodeEditor = () => {
           status: output?.includes("Error") ? "error" : "completed"
         };
         
-        if (submissionId) {
+        if (currentSubmissionId) {
           await axios.put(
-            `/api/submissions/${submissionId}`, 
+            `/api/submissions/${currentSubmissionId}`, 
             submissionData,
             {
               headers: { 
@@ -882,7 +885,7 @@ const CodeEditor = () => {
         setLanguage(location.state.submissionData.language);
         setInput(location.state.submissionData.input);
         setOutput(location.state.submissionData.output);
-        setSubmissionId(location.state.submissionId);
+        setCurrentSubmissionId(location.state.submissionId);
       }
     } else {
       // On fresh load/refresh with no state
@@ -910,12 +913,12 @@ const CodeEditor = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#88BDBC] p-3 flex flex-col items-center font-['Poppins']">
+    <div className="min-h-screen bg-[#88BDBC] px-3 py-4 sm:px-4 sm:py-5 font-['Poppins']">
       {/* Language & Theme Selectors */}
-      <div className="w-[65%] macbook-width flex justify-between mb-3">
-        <div className="flex gap-2">
+      <div className="mx-auto mb-3 flex w-full max-w-7xl flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+        <div className="flex flex-wrap gap-2">
           <button
-            className="px-3 py-1.5 bg-[#254E58] text-white font-semibold rounded-md 
+            className="min-h-10 px-3 py-1.5 bg-[#254E58] text-white font-semibold rounded-md 
                 shadow-md hover:bg-[#112D32] transition-colors flex items-center gap-2 text-sm file-manager-btn"
             onClick={toggleFileExplorer}
           >
@@ -924,7 +927,7 @@ const CodeEditor = () => {
           </button>
 
           <select
-            className="w-44 px-2 py-1.5 bg-[#254E58] text-white font-semibold rounded-md 
+            className="min-h-10 w-full sm:w-44 px-2 py-1.5 bg-[#254E58] text-white font-semibold rounded-md 
                shadow-md focus:outline-none focus:ring-1 focus:ring-[#88BDBC] 
                transition cursor-pointer hover:bg-[#112D32] text-sm"
             value={language}
@@ -944,7 +947,7 @@ const CodeEditor = () => {
           </select>
 
           <select
-            className="w-44 px-2 py-1.5 bg-[#254E58] text-white font-semibold rounded-md 
+            className="min-h-10 w-full sm:w-44 px-2 py-1.5 bg-[#254E58] text-white font-semibold rounded-md 
                shadow-md focus:outline-none focus:ring-1 focus:ring-[#88BDBC] 
                transition cursor-pointer hover:bg-[#112D32] text-sm"
             value={theme}
@@ -965,7 +968,7 @@ const CodeEditor = () => {
           {!isCollaborative && (
             <button
               onClick={handleShare}
-              className="flex items-center gap-1.5 px-2 py-1.5 bg-white text-[#254E58] rounded-md hover:bg-[#254E58] hover:text-white transition-colors text-sm"
+              className="min-h-10 flex items-center gap-1.5 px-3 py-1.5 bg-white text-[#254E58] rounded-md hover:bg-[#254E58] hover:text-white transition-colors text-sm"
               disabled={isGeneratingLink}
             >
               {isGeneratingLink ? (
@@ -984,13 +987,13 @@ const CodeEditor = () => {
         </div>
 
         {isCollaborative ? (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {showCopiedMessage ? (
               <span className="text-xs text-white bg-[#254E58] px-2 py-1 rounded-md">ID Copied!</span>
             ) : (
               <button
                 onClick={copyRoomLink}
-                className="flex items-center gap-1.5 px-2 py-1.5 bg-white text-[#254E58] rounded-md hover:bg-[#254E58] hover:text-white transition-colors text-sm"
+                className="min-h-10 flex items-center gap-1.5 px-3 py-1.5 bg-white text-[#254E58] rounded-md hover:bg-[#254E58] hover:text-white transition-colors text-sm"
                 title="Copy room ID to clipboard"
               >
                 <FaCopy />
@@ -1006,7 +1009,7 @@ const CodeEditor = () => {
               </div>
             ) : hasJoinedRoom && displayRoomId ? (
               <div className="flex items-center gap-2">
-                <div className="px-2 py-1.5 bg-white text-[#254E58] rounded-md border border-[#254E58]/30 text-sm">
+                <div className="min-h-10 px-3 py-2 bg-white text-[#254E58] rounded-md border border-[#254E58]/30 text-sm">
                   Room ID: {displayRoomId.substring(0, 8)}...
                 </div>
               </div>
@@ -1017,7 +1020,7 @@ const CodeEditor = () => {
                   value={manualRoomId}
                   onChange={(e) => setManualRoomId(e.target.value)}
                   placeholder="Enter Room ID"
-                  className="px-2 py-1.5 bg-white text-[#254E58] rounded-md border border-[#254E58]/30 focus:outline-none focus:ring-1 focus:ring-[#88BDBC] text-sm w-40"
+                  className="min-h-10 w-full sm:w-48 px-3 py-2 bg-white text-[#254E58] rounded-md border border-[#254E58]/30 focus:outline-none focus:ring-1 focus:ring-[#88BDBC] text-sm"
                 />
                 {roomIdError && (
                   <div className="absolute -bottom-5 left-0 text-xs text-red-500">
@@ -1030,7 +1033,7 @@ const CodeEditor = () => {
             {!hasJoinedRoom && (
               <button
                 onClick={joinExistingRoom}
-                className="flex items-center gap-1.5 px-2 py-1.5 bg-white text-[#254E58] rounded-md hover:bg-[#254E58] hover:text-white transition-colors text-sm"
+                className="min-h-10 flex items-center gap-1.5 px-3 py-1.5 bg-white text-[#254E58] rounded-md hover:bg-[#254E58] hover:text-white transition-colors text-sm"
                 title="Join existing collaboration room"
               >
                 <FaSignInAlt />
@@ -1040,24 +1043,24 @@ const CodeEditor = () => {
             
             <button
               onClick={toggleChat}
-              className={`flex items-center gap-1.5 px-2 py-1.5 ${showChat ? 'bg-[#254E58] text-white' : 'bg-white text-[#254E58]'} rounded-md hover:bg-[#254E58] hover:text-white transition-colors text-sm`}
+              className={`min-h-10 flex items-center gap-1.5 px-3 py-1.5 ${showChat ? 'bg-[#254E58] text-white' : 'bg-white text-[#254E58]'} rounded-md hover:bg-[#254E58] hover:text-white transition-colors text-sm`}
             >
               <FaComments />
               Chat
             </button>
             <button
               onClick={toggleCollaborativeMode}
-              className="flex items-center gap-1.5 px-2 py-1.5 bg-white text-[#254E58] rounded-md hover:bg-[#254E58] hover:text-white transition-colors text-sm"
+              className="min-h-10 flex items-center gap-1.5 px-3 py-1.5 bg-white text-[#254E58] rounded-md hover:bg-[#254E58] hover:text-white transition-colors text-sm"
             >
               <FaUsers />
               Exit Collaboration
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={toggleCollaborativeMode}
-              className="flex items-center gap-1.5 px-2 py-1.5 bg-white text-[#254E58] rounded-md hover:bg-[#254E58] hover:text-white transition-colors text-sm"
+              className="min-h-10 flex items-center gap-1.5 px-3 py-1.5 bg-white text-[#254E58] rounded-md hover:bg-[#254E58] hover:text-white transition-colors text-sm"
             >
               <FaUsers />
               Collaborate
@@ -1067,9 +1070,9 @@ const CodeEditor = () => {
       </div>
 
       {/* Main Container with File Explorer */}
-      <div className={`w-[65%] macbook-width flex ${showFileExplorer ? 'gap-3' : 'gap-0'}`}>
+      <div className={`mx-auto flex w-full max-w-7xl flex-col gap-3 ${showFileExplorer ? 'xl:gap-3' : 'xl:gap-0'} xl:flex-row`}>
         {/* File Explorer - Left Side */}
-        <div className={`transition-all duration-300 ${showFileExplorer ? 'w-72' : 'w-0'} overflow-hidden h-[78vh]`}>
+        <div className={`transition-all duration-300 ${showFileExplorer ? 'w-full xl:w-72' : 'h-0 w-0 xl:h-[78vh]'} overflow-hidden ${showFileExplorer ? 'h-[50vh] sm:h-[60vh] xl:h-[78vh]' : ''}`}>
           {showFileExplorer && (
             <FileExplorer 
               onFileSelect={handleFileSelect}
@@ -1081,9 +1084,9 @@ const CodeEditor = () => {
         </div>
 
         {/* Code Editor and IO - Right Side */}
-        <div className={`${showFileExplorer ? 'flex-1' : 'w-full'} flex h-[78vh]`}>
+        <div className={`${showFileExplorer ? 'flex-1' : 'w-full'} flex flex-col gap-3 xl:h-[78vh] xl:flex-row`}>
           {/* Code Editor - Left Side */}
-          <div className="flex-1 mr-3 overflow-hidden shadow-md flex flex-col h-full bg-[#1E1E1E] rounded-lg">
+          <div className="min-h-[52vh] overflow-hidden shadow-md flex flex-col bg-[#1E1E1E] rounded-lg xl:min-h-0 xl:flex-1">
             {isCollaborative && (
               <div className="flex items-center px-2 py-1 bg-[#254E58] text-white text-xs border-b border-[#88BDBC]/30">
                 <div className="flex items-center gap-2">
@@ -1121,9 +1124,9 @@ const CodeEditor = () => {
           </div>
 
           {/* Right Side - Output on Top, Input Below */}
-          <div className="w-1/3 flex flex-col h-full gap-3">
+          <div className="flex flex-col gap-3 xl:h-full xl:w-[320px] 2xl:w-[360px]">
             {/* Output Box */}
-            <div className="h-[48%] border border-[#254E58]/30 rounded-lg bg-[#254E58] 
+            <div className="min-h-[180px] xl:h-[48%] border border-[#254E58]/30 rounded-lg bg-[#254E58] 
                          text-white overflow-auto shadow-md">
               <div className="px-2 py-1.5 border-b border-[#88BDBC]/30 text-sm">
                 📝 Output
@@ -1140,13 +1143,13 @@ const CodeEditor = () => {
             </div>
 
             {/* Input Box */}
-            <div className="h-[38%] border border-[#254E58]/30 rounded-lg bg-[#112D32] 
+            <div className="min-h-[160px] xl:h-[38%] border border-[#254E58]/30 rounded-lg bg-[#112D32] 
                          text-white shadow-md overflow-hidden">
               <div className="px-2 py-1.5 border-b border-[#88BDBC]/30 text-sm">
                 🔹 Custom Input (Optional)
               </div>
               <textarea
-                className="w-full h-[calc(100%-32px)] p-2 bg-transparent text-white 
+                className="w-full h-[160px] xl:h-[calc(100%-32px)] p-2 bg-transparent text-white 
                         placeholder-[#88BDBC]/70 focus:outline-none resize-none 
                         text-xs font-['Fira Code']"
                 value={input}
@@ -1208,9 +1211,20 @@ const CodeEditor = () => {
         </div>
       </div>
 
+      <div className="mx-auto mt-4 w-full max-w-7xl">
+        <AIAssistantPanel
+          code={code}
+          language={language}
+          input={input}
+          output={output}
+          isDisabled={!user}
+          disabledReason="Sign in to use the AI assistant."
+        />
+      </div>
+
       {/* Chat Panel - Fixed Position */}
       {isCollaborative && showChat && (
-        <div className="fixed top-[135px] right-[2%] w-[280px] h-[42vh] border border-[#254E58]/30 rounded-lg shadow-md flex flex-col overflow-hidden z-10">
+        <div className="fixed inset-x-3 bottom-3 h-[50vh] border border-[#254E58]/30 rounded-lg shadow-md flex flex-col overflow-hidden z-20 bg-white sm:left-auto sm:right-4 sm:top-[135px] sm:bottom-auto sm:w-[320px] sm:h-[42vh]">
           <div className="px-2 py-1.5 bg-[#254E58] border-b border-[#88BDBC]/30 text-white text-sm flex justify-between items-center">
             <span>Chat ({userCount} users)</span>
             <button 

@@ -7,10 +7,10 @@ import { Menu, X } from "lucide-react";
 const CodeBoostLogo = () => {
   return (
     <div className="flex items-center">
-      <span className="text-4xl font-bold text-[#254E58] font-['Righteous'] tracking-wider">
+      <span className="text-2xl font-bold text-[#254E58] font-['Righteous'] tracking-wider sm:text-3xl lg:text-4xl">
         Code
       </span>
-      <span className="text-4xl font-bold text-white font-['Righteous'] tracking-wider">
+      <span className="text-2xl font-bold text-white font-['Righteous'] tracking-wider sm:text-3xl lg:text-4xl">
         Boost
       </span>
     </div>
@@ -27,8 +27,8 @@ const Navbar = () => {
 
   return (
     <nav className="bg-[#88BDBC] sticky top-0 z-50 border-0">
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
-        <div className="flex items-center justify-between h-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
+        <div className="flex items-center justify-between gap-4 py-4 sm:h-20 sm:py-0">
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link to="/" className="flex items-center">
@@ -80,6 +80,7 @@ const Navbar = () => {
             <button
               className="md:hidden text-white focus:outline-none hover:text-[#112D32] transition-colors"
               onClick={() => setIsOpen(!isOpen)}
+              aria-label={isOpen ? "Close menu" : "Open menu"}
             >
               {isOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
@@ -91,7 +92,7 @@ const Navbar = () => {
           <div className="md:hidden bg-[#88BDBC] py-4 space-y-3 border-t border-white/20 animate-fadeIn">
             <Link
               to="/editor"
-              className="block text-white text-center hover:text-[#112D32] py-2 font-['Righteous'] tracking-wide relative group"
+              className="block rounded-lg bg-white/10 px-4 py-3 text-white text-center hover:text-[#112D32] hover:bg-white/20 font-['Righteous'] tracking-wide relative group transition-colors"
               onClick={() => setIsOpen(false)}
             >
               <span>CodeEditor</span>
@@ -101,7 +102,7 @@ const Navbar = () => {
             {user ? (
               <Link
                 to="/profile"
-                className="block text-white text-center hover:text-[#112D32] py-2 font-['Righteous'] tracking-wide relative group"
+                className="block rounded-lg bg-white/10 px-4 py-3 text-white text-center hover:text-[#112D32] hover:bg-white/20 font-['Righteous'] tracking-wide relative group transition-colors"
                 onClick={() => setIsOpen(false)}
               >
                 <span>Profile</span>
@@ -110,7 +111,7 @@ const Navbar = () => {
             ) : (
               <Link
                 to="/login"
-                className="block text-white text-center hover:text-[#112D32] py-2 font-['Righteous'] tracking-wide relative group"
+                className="block rounded-lg bg-white/10 px-4 py-3 text-white text-center hover:text-[#112D32] hover:bg-white/20 font-['Righteous'] tracking-wide relative group transition-colors"
                 onClick={() => setIsOpen(false)}
               >
                 <span>Sign In</span>

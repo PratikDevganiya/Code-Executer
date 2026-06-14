@@ -65,8 +65,8 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-white font-['Montserrat']">
-      <div className="max-w-[1200px] mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
           {/* User Details Section */}
           <div className="md:col-span-1">
             <div className="bg-white rounded-lg shadow-md border border-[#88BDBC]/20 overflow-hidden">
@@ -78,7 +78,7 @@ const Profile = () => {
           <div className="md:col-span-2 space-y-4">
             {/* Recent Submissions */}
             <div className="bg-white rounded-lg shadow-md border-l-4 border-[#88BDBC] overflow-hidden">
-              <div className="p-4">
+              <div className="p-4 sm:p-5">
                 <h2 className="text-lg font-bold text-[#254E58] flex items-center gap-2">
                   <span className="text-xl">📌</span> Recent Submissions
                 </h2>
@@ -90,7 +90,7 @@ const Profile = () => {
 
             {/* Collaboration History */}
             <div className="bg-white rounded-lg shadow-md border-l-4 border-[#88BDBC] overflow-hidden">
-              <div className="p-4">
+              <div className="p-4 sm:p-5">
                 <h2 className="text-lg font-bold text-[#254E58] flex items-center gap-2">
                   <span className="text-xl">🤝</span> Collaboration History
                 </h2>

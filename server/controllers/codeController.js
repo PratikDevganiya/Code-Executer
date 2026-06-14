@@ -4,6 +4,7 @@ const { runCode } = require("../services/codeExecutionService");
 const Collaboration = require('../models/Collaboration');
 const asyncHandler = require('express-async-handler');
 const { formatLanguageName } = require('../utils/languageUtils');
+const { generateAssistantResponse, TASK_CONFIG } = require("../services/aiAssistantService");
 
 // @desc    Execute code
 // @route   POST /api/code/execute
@@ -306,8 +307,58 @@ const deleteCollaboration = async (req, res) => {
   }
 };
 
+// @desc    Get AI code assistance
+// @route   POST /api/code/assistant
+const getAIAssistance = asyncHandler(async (req, res) => {
+  const { task, code, language, input, output, customPrompt } = req.body || {};
+
+  if (!code || typeof code !== "string") {
+    return res.status(400).json({ message: "Code is required for AI assistance." });
+  }
+
+  if (!language || typeof language !== "string") {
+    return res.status(400).json({ message: "Language is required for AI assistance." });
+  }
+
+  if (!task || !TASK_CONFIG[task]) {
+    return res.status(400).json({
+      message: "A valid assistant task is required.",
+      supportedTasks: Object.keys(TASK_CONFIG),
+    });
+  }
+
+  try {
+    const assistantResponse = await generateAssistantResponse({
+      task,
+      code,
+      language,
+      input,
+      output,
+      customPrompt,
+    });
+
+    return res.status(200).json({
+      task,
+      model: assistantResponse.model,
+      content: assistantResponse.content,
+    });
+  } catch (error) {
+    console.error("AI assistant error:", error.response?.data || error.message);
+
+    const upstreamMessage =
+      error.response?.data?.error?.message ||
+      error.message ||
+      "Failed to generate AI assistance.";
+
+    return res.status(error.statusCode || error.response?.status || 500).json({
+      message: upstreamMessage,
+    });
+  }
+});
+
 module.exports = {
   executeCode,
+  getAIAssistance,
   saveSubmission,
   getUserSubmissions: getSubmissions,
   getSubmissionById,
