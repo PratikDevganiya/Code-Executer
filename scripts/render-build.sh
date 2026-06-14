@@ -6,7 +6,7 @@ echo "Starting Render build"
 echo "Installing and building client"
 cd client
 npm install
-export NODE_OPTIONS="--no-experimental-fetch --openssl-legacy-provider"
+export NODE_OPTIONS="--openssl-legacy-provider"
 npm run build
 
 echo "Installing server dependencies"
