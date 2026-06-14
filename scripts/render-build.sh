@@ -3,8 +3,11 @@ set -e
 
 echo "Starting Render build"
 
-echo "Installing and building client"
+echo "Setting up client production environment"
 cd client
+cp .env.production .env
+
+echo "Installing and building client"
 npm install
 export NODE_OPTIONS="--openssl-legacy-provider"
 npm run build
