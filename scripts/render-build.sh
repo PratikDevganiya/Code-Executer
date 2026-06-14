@@ -11,19 +11,18 @@ VITE_SOCKET_URL=/
 VITE_BASE_URL=
 
 # Build configurations
-NODE_ENV=production
 BUILD_SSR=false
 BUILD_MODE=production
 EOF
 
 echo "Installing and building client"
-npm install
+npm ci
 export NODE_OPTIONS="--openssl-legacy-provider"
 npm run build
 
 echo "Installing server dependencies"
 cd ../server
-npm install
+npm ci
 
 echo "Copying client build into server/public"
 mkdir -p public
