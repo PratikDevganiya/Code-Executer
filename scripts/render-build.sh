@@ -5,7 +5,16 @@ echo "Starting Render build"
 
 echo "Setting up client production environment"
 cd client
-cp .env.production .env
+cat > .env << 'EOF'
+VITE_API_URL=/api
+VITE_SOCKET_URL=/
+VITE_BASE_URL=
+
+# Build configurations
+NODE_ENV=production
+BUILD_SSR=false
+BUILD_MODE=production
+EOF
 
 echo "Installing and building client"
 npm install
